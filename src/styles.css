@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #07080b;
+  --color-panel: #101114;
+  --color-face: #17191f;
+  --color-ink: #c8c2b4;
+  --color-mute: #8d877c;
+  --color-line: #2e2b26;
+  --color-ember: #e85d2c;
+  --font-display: "Unbounded", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --font-sans: "Figtree", "Avenir Next", sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    overflow: hidden;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--color-ember);
+    color: var(--color-void);
+  }
+}
+
+.kicker {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hud-pad {
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+}
+
+.stage-canvas {
+  touch-action: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stage-canvas {
+    cursor: none;
+  }
+}
+
+.vignette {
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(7, 8, 11, 0.72) 100%);
+}
+
+.grain {
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(200, 194, 180, 0.45) 0.6px, transparent 0.7px);
+  background-size: 3px 3px;
+}
+
+.veil {
+  animation: veil-out 1.05s ease 0.12s forwards;
+}
+
+@keyframes veil-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.cursor-ring {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 1px solid var(--color-ink);
+  border-radius: 999px;
+  opacity: 0;
+  mix-blend-mode: difference;
+}
+
+.cursor-ring::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  background: var(--color-ember);
+  border-radius: 999px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-ring {
+    display: none;
+  }
+}
+
+.backdrop {
+  z-index: 25;
+  background: rgba(7, 8, 11, 0.46);
+}
+
+.dossier {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  max-height: 86dvh;
+  flex-direction: column;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  animation: rise 280ms ease;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 840px) {
+  .dossier {
+    top: 0;
+    left: auto;
+    width: 28rem;
+    max-height: none;
+    height: 100%;
+  }
+}
+
+.play-btn,
+.save-btn,
+.ghost-btn,
+.text-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.play-btn,
+.save-btn {
+  width: 100%;
+}
+
+.play-btn {
+  background: var(--color-ember);
+  color: var(--color-void);
+}
+
+.play-btn:hover,
+.save-btn:hover {
+  filter: brightness(1.06);
+}
+
+.play-btn:active,
+.save-btn:active,
+.ghost-btn:active {
+  transform: translateY(1px);
+}
+
+.save-btn {
+  background: var(--color-ink);
+  color: var(--color-void);
+}
+
+.ghost-btn,
+.text-btn {
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+  background: transparent;
+  padding-inline: 1.1rem;
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-void);
+  color: var(--color-ink);
+  padding: 0.8rem 0.9rem;
+  font-size: 1rem;
+  outline: none;
+}
+
+.field::placeholder {
+  color: var(--color-mute);
+}
+
+.field:focus {
+  border-color: var(--color-ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veil,
+  .dossier {
+    animation: none;
+  }
+
+  .veil {
+    opacity: 0;
+  }
+
+  .grain {
+    display: none;
+  }
+}
