@@ -13,13 +13,6 @@ import {
   type GameSlot,
 } from "@/studio/slots";
 
-function stageName(progress: number): string {
-  if (progress < 18) return "Biblioteca";
-  if (progress < 62) return "Recuo";
-  if (progress < 86) return "Marca";
-  return "Muro";
-}
-
 export function StudioShell() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
@@ -161,40 +154,29 @@ export function StudioShell() {
       <div className="veil pointer-events-none absolute inset-0 z-10 bg-void" />
       <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
-      <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-display text-xl text-ink">NJengines</p>
-            <p className="kicker mt-1 text-mute">Estúdio</p>
-          </div>
-          <p className="kicker text-right text-mute">
-            12 baias
-            <span className="mt-1 block tabular-nums text-ink">
-              {filled} {filled === 1 ? "jogo" : "jogos"}
-            </span>
-          </p>
-        </header>
-
-        {phase === "intro" ? (
-          <div>
-            <p className="font-display text-5xl tabular-nums text-ink">{String(progress).padStart(2, "0")}</p>
-            <p className="kicker mt-2 text-mute">{stageName(progress)}</p>
-            <div className="mt-4 h-px w-48 bg-line">
-              <div
-                className="h-px w-full origin-left bg-ember"
-                style={{ transform: `scaleX(${progress / 100})` }}
-              />
+      {phase === "gallery" && progress >= 100 && (
+        <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
+          <header className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-display text-xl text-ink">NJengines</p>
+              <p className="kicker mt-1 text-mute">Estúdio</p>
             </div>
-          </div>
-        ) : (
+            <p className="kicker text-right text-mute">
+              12 baias
+              <span className="mt-1 block tabular-nums text-ink">
+                {filled} {filled === 1 ? "jogo" : "jogos"}
+              </span>
+            </p>
+          </header>
+
           <div className="flex items-end justify-between gap-4">
             <p className="kicker max-w-xs text-mute">
               {hover ? slotTitle(hover) : "Arraste o muro. Clique numa baia."}
             </p>
             <p className="kicker text-right text-ember">Em breve, os jogos</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {!webgl && (
         <div className="absolute inset-0 z-10 overflow-y-auto bg-void pt-28 pb-16">
