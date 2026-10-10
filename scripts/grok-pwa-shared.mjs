@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const DEFAULT_APP_NAME = "Grok App";
+export const INSTALL_APP_NAME = "NJengine";
 export const OG_SERVICE_URL_DEFAULT = "https://og.grok.me";
 export const OG_SITE_REL_PATH = "src/lib/og/site.json";
 
@@ -152,13 +153,15 @@ export function stripInstallParams(url) {
 }
 
 export function renderInstallPageHtml(template, { host, url } = {}) {
+  void host; // Preserve the options shape used by existing callers.
   return String(template)
-    .replaceAll("{{APP_NAME}}", escapeHtml(appNameFromHost(host)))
+    .replaceAll("{{APP_NAME}}", escapeHtml(INSTALL_APP_NAME))
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
 export function renderWebManifest(hostHeader) {
-  const name = appNameFromHost(hostHeader);
+  void hostHeader; // Keep the existing caller contract; the install name is fixed.
+  const name = INSTALL_APP_NAME;
   return JSON.stringify(
     {
       name,
@@ -448,7 +451,7 @@ export function injectGrokPwaHead(html, ctx = {}) {
   let next = stripShareMetaTags(html);
   if (!readGrokExtensionsEnabled()) next = stripGrokExtensionsScript(next);
 
-  const missing = grokPwaHeadTags(appName)
+  const missing = grokPwaHeadTags(INSTALL_APP_NAME)
     .filter(([key]) => {
       if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
       if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
