@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Play, RotateCcw, X } from "lucide-react";
+import { ImagePlus, Play, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
 import {
@@ -87,12 +87,50 @@ export function StudioShell() {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "Escape") {
         if (selectedId) setSelectedId(null);
-        else if (phase === "intro") engineRef.current?.skip();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, selectedId]);
+  }, [selectedId]);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio("/intro.mp3");
+    audio.preload = "auto";
+    audio.loop = false;
+    audio.volume = 0.75;
+    audioRef.current = audio;
+    let started = false;
+    const kick = () => {
+      if (started) return;
+      started = true;
+      void audio.play().catch(() => {});
+    };
+    kick();
+    window.addEventListener("pointerdown", kick, { once: true });
+    window.addEventListener("keydown", kick, { once: true });
+    return () => {
+      audio.pause();
+      audio.src = "";
+      audioRef.current = null;
+      window.removeEventListener("pointerdown", kick);
+      window.removeEventListener("keydown", kick);
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || phase !== "gallery") return;
+    const fade = window.setInterval(() => {
+      audio.volume = Math.max(0, audio.volume - 0.08);
+      if (audio.volume <= 0) {
+        audio.pause();
+        window.clearInterval(fade);
+      }
+    }, 120);
+    return () => window.clearInterval(fade);
+  }, [phase]);
 
   useEffect(() => {
     const ring = cursorRef.current;
@@ -115,14 +153,6 @@ export function StudioShell() {
     return writeSlots(next);
   }
 
-  function replay() {
-    setSelectedId(null);
-    setHoverId(null);
-    setPhase("intro");
-    setProgress(0);
-    engineRef.current?.replay();
-  }
-
   return (
     <main className="fixed inset-0 overflow-hidden bg-void text-ink">
       <canvas ref={canvasRef} className="stage-canvas absolute inset-0 h-full w-full" />
@@ -137,18 +167,12 @@ export function StudioShell() {
             <p className="font-display text-xl text-ink">NJengines</p>
             <p className="kicker mt-1 text-mute">Estúdio</p>
           </div>
-          {phase === "intro" ? (
-            <button type="button" className="text-btn pointer-events-auto" onClick={() => engineRef.current?.skip()}>
-              Pular
-            </button>
-          ) : (
-            <p className="kicker text-right text-mute">
-              12 baias
-              <span className="mt-1 block tabular-nums text-ink">
-                {filled} {filled === 1 ? "jogo" : "jogos"}
-              </span>
-            </p>
-          )}
+          <p className="kicker text-right text-mute">
+            12 baias
+            <span className="mt-1 block tabular-nums text-ink">
+              {filled} {filled === 1 ? "jogo" : "jogos"}
+            </span>
+          </p>
         </header>
 
         {phase === "intro" ? (
@@ -167,10 +191,7 @@ export function StudioShell() {
             <p className="kicker max-w-xs text-mute">
               {hover ? slotTitle(hover) : "Arraste o muro. Clique numa baia."}
             </p>
-            <button type="button" className="text-btn pointer-events-auto" onClick={replay}>
-              <RotateCcw className="size-4" />
-              Abertura
-            </button>
+            <p className="kicker text-right text-ember">Em breve, os jogos</p>
           </div>
         )}
       </div>
@@ -289,7 +310,7 @@ function Dossier({
           )}
         </div>
 
-        <p className="kicker mt-5 text-ember">{isFilled(slot) ? "No ar" : "Livre"}</p>
+        <p className="kicker mt-5 text-ember">{isFilled(slot) ? "No ar" : "Em breve"}</p>
         <h2 id="bay-title" className="mt-2 font-display text-3xl text-balance text-ink">
           {slotTitle({ ...slot, title: draft.title })}
         </h2>

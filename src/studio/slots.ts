@@ -50,7 +50,7 @@ export function isFilled(slot: GameSlot): boolean {
 }
 
 export function slotTitle(slot: GameSlot): string {
-  return slot.title.trim() || "Compartimento livre";
+  return slot.title.trim() || "Em breve";
 }
 
 export function safeHttpUrl(value: string): string {

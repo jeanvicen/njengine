@@ -4,10 +4,10 @@
   --color-void: #07080b;
   --color-panel: #101114;
   --color-face: #17191f;
-  --color-ink: #c8c2b4;
+  --color-ink: #ece8de;
   --color-mute: #8d877c;
   --color-line: #2e2b26;
-  --color-ember: #e85d2c;
+  --color-ember: #d4af37;
   --font-display: "Unbounded", "Avenir Next Condensed", "Arial Narrow", sans-serif;
   --font-sans: "Figtree", "Avenir Next", sans-serif;
 }
@@ -70,7 +70,7 @@
 .grain {
   opacity: 0.22;
   mix-blend-mode: overlay;
-  background-image: radial-gradient(rgba(200, 194, 180, 0.45) 0.6px, transparent 0.7px);
+  background-image: radial-gradient(rgba(212, 175, 55, 0.4) 0.6px, transparent 0.7px);
   background-size: 3px 3px;
 }
 

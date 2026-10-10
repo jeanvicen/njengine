@@ -1,5 +1,5 @@
-const INK = "#c8c2b4";
-const EMBER = "#e85d2c";
+const INK = "#ece8de";
+const EMBER = "#d4af37";
 const VOID = "#07080b";
 const FACE = "#14161c";
 
@@ -51,10 +51,10 @@ function grain(ctx: CanvasRenderingContext2D, w: number, h: number, rand: () => 
 }
 
 function frame(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  ctx.strokeStyle = "rgba(200,194,180,0.45)";
+  ctx.strokeStyle = "rgba(236,232,222,0.45)";
   ctx.lineWidth = Math.max(2, w * 0.008);
   ctx.strokeRect(w * 0.045, h * 0.036, w * 0.91, h * 0.928);
-  ctx.strokeStyle = "rgba(232,93,44,0.85)";
+  ctx.strokeStyle = "rgba(212,175,55,0.85)";
   ctx.lineWidth = Math.max(3, w * 0.012);
   ctx.beginPath();
   ctx.moveTo(w * 0.045, h * 0.036);
@@ -191,7 +191,7 @@ function labelBlock(
   ctx.fillStyle = EMBER;
   ctx.fillText(input.bay, w * 0.92, h * 0.075);
 
-  const title = (input.title.trim() || "LIVRE").toUpperCase();
+  const title = (input.title.trim() || "EM BREVE").toUpperCase();
   let size = Math.round(w * 0.062);
   ctx.textAlign = "center";
   ctx.fillStyle = INK;

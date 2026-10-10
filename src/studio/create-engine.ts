@@ -24,10 +24,10 @@ type EngineOptions = {
   onFail: () => void;
 };
 
-const T_FORM0 = 0.65;
-const T_FORM1 = 4.55;
-const T_HOLD = 6.25;
-const T_END = 8.2;
+const T_FORM0 = 1.1;
+const T_FORM1 = 7.2;
+const T_HOLD = 9.8;
+const T_END = 12.6;
 const CARD_W = 3.2;
 const CARD_H = 4;
 
@@ -126,14 +126,14 @@ export function createEngine(options: EngineOptions): EngineHandle {
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 400);
   const logo = buildLogo();
 
-  scene.add(new THREE.HemisphereLight(0xc8c2b4, 0x14120f, 0.72));
+  scene.add(new THREE.HemisphereLight(0xf0e9d8, 0x14120f, 0.7));
   const key = new THREE.DirectionalLight(0xfff6ee, 2.4);
   key.position.set(-6, 9, 12);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xe85d2c, 0.85);
+  const rim = new THREE.DirectionalLight(0xd4af37, 1.1);
   rim.position.set(7, 2, -6);
   scene.add(rim);
-  const core = new THREE.PointLight(0xe85d2c, 0, 48);
+  const core = new THREE.PointLight(0xd4af37, 0, 48);
   core.position.set(0, 0.2, 3.2);
   scene.add(core);
 
@@ -198,7 +198,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
     mesh.frustumCulled = false;
     const color = new THREE.Color();
     mine.forEach((tile, index) => {
-      color.set("#ffffff").lerp(new THREE.Color("#f3d2c3"), (index % 5) * 0.06);
+      color.set("#ffffff").lerp(new THREE.Color("#f0d9a0"), (index % 5) * 0.06);
       mesh.setColorAt(index, color);
     });
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -224,10 +224,10 @@ export function createEngine(options: EngineOptions): EngineHandle {
     const rotY = (col - (cols - 1) / 2) * 0.06;
     const z = -Math.abs(col - (cols - 1) / 2) * 0.34;
     const mat = new THREE.MeshStandardMaterial({
-      roughness: 0.42,
-      metalness: 0.28,
+      roughness: 0.24,
+      metalness: 0.68,
       color: 0xffffff,
-      emissive: new THREE.Color("#e85d2c"),
+      emissive: new THREE.Color("#d4af37"),
       emissiveIntensity: 0.05,
       transparent: true,
       opacity: 0,
@@ -235,9 +235,9 @@ export function createEngine(options: EngineOptions): EngineHandle {
     const mesh = new THREE.Mesh(cardGeo, mat);
     mesh.userData.id = slot.id;
     const frameMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1815,
-      roughness: 0.32,
-      metalness: 0.78,
+      color: 0x4a3a14,
+      roughness: 0.2,
+      metalness: 0.92,
       transparent: true,
       opacity: 0,
     });
@@ -260,7 +260,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
     });
   });
 
-  const dustCount = 140;
+  const dustCount = 140; // reduzida no resize se mobile
   const dustArray = new Float32Array(dustCount * 3);
   for (let i = 0; i < dustCount; i++) {
     dustArray[i * 3] = (rand() - 0.5) * 48;
@@ -272,7 +272,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
   const dust = new THREE.Points(
     dustGeo,
     new THREE.PointsMaterial({
-      color: 0xc8c2b4,
+      color: 0xd8c890,
       size: 0.045,
       transparent: true,
       opacity: 0.45,
@@ -369,7 +369,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
     camera.fov = state.fov;
     camera.aspect = state.aspect;
     camera.updateProjectionMatrix();
-    const dprCap = state.aspect < 1 ? 1.6 : 2;
+    const dprCap = state.aspect < 1 ? 1.35 : 2;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
     renderer.setSize(w, h, false);
 
