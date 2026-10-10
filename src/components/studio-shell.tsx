@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Play, X } from "lucide-react";
+import { ImagePlus, Play, User, Volume2, VolumeX, Wifi, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
 import {
@@ -13,11 +13,17 @@ import {
   type GameSlot,
 } from "@/studio/slots";
 
-function stageName(progress: number): string {
-  if (progress < 18) return "Biblioteca";
-  if (progress < 62) return "Recuo";
-  if (progress < 86) return "Marca";
-  return "Muro";
+const BOOT_LINES = [
+  "Inicializando núcleo gráfico",
+  "Sincronizando biblioteca",
+  "Preparando ambiente de jogos",
+  "Otimizando renderização",
+  "Assinando NJENGINE",
+];
+
+function bootLine(progress: number): string {
+  const index = Math.min(BOOT_LINES.length - 1, Math.floor((progress / 100) * BOOT_LINES.length));
+  return BOOT_LINES[index];
 }
 
 export function StudioShell() {
@@ -29,6 +35,13 @@ export function StudioShell() {
   const [progress, setProgress] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [clock, setClock] = useState("");
+  const mutedRef = useRef(false);
+  mutedRef.current = muted;
+  const tickRef = useRef<HTMLAudioElement | null>(null);
+  const selectRef = useRef<HTMLAudioElement | null>(null);
   const [webgl, setWebgl] = useState(true);
   const [engineOn, setEngineOn] = useState(false);
   const slotsRef = useRef(slots);
@@ -53,8 +66,29 @@ export function StudioShell() {
         reduced,
         onPhase: (next) => setPhase(next),
         onProgress: (value) => setProgress(value),
-        onSelect: (id) => setSelectedId(id),
+        onSelect: (id) => {
+          setSelectedId(id);
+          if (id && !mutedRef.current) {
+            const hit = selectRef.current?.cloneNode(true) as HTMLAudioElement | null;
+            if (hit) {
+              hit.volume = 0.8;
+              void hit.play().catch(() => {});
+            }
+          }
+        },
         onHover: (id) => setHoverId(id),
+        onFocus: (id) => {
+          setFocusId((prev) => {
+            if (prev !== id && id && !mutedRef.current) {
+              const tick = tickRef.current?.cloneNode(true) as HTMLAudioElement | null;
+              if (tick) {
+                tick.volume = 0.5;
+                void tick.play().catch(() => {});
+              }
+            }
+            return id;
+          });
+        },
         onFail: () => setWebgl(false),
       });
       if (dead) {
@@ -87,11 +121,16 @@ export function StudioShell() {
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "Escape") {
         if (selectedId) setSelectedId(null);
+        return;
       }
+      if (selectedId || phase !== "gallery") return;
+      if (event.key === "ArrowRight") engineRef.current?.moveFocus(1);
+      else if (event.key === "ArrowLeft") engineRef.current?.moveFocus(-1);
+      else if (event.key === "Enter") engineRef.current?.confirm();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId]);
+  }, [phase, selectedId]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -133,6 +172,18 @@ export function StudioShell() {
   }, [phase]);
 
   useEffect(() => {
+    tickRef.current = new Audio("/sfx-tick.mp3");
+    selectRef.current = new Audio("/sfx-select.mp3");
+    const update = () => {
+      const now = new Date();
+      setClock(now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+    };
+    update();
+    const timer = window.setInterval(update, 10_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     const ring = cursorRef.current;
     if (!ring) return;
     const move = (event: PointerEvent) => {
@@ -145,7 +196,6 @@ export function StudioShell() {
   }, []);
 
   const selected = slots.find((slot) => slot.id === selectedId) ?? null;
-  const hover = slots.find((slot) => slot.id === hoverId) ?? null;
   const filled = slots.filter(isFilled).length;
 
   function persist(next: GameSlot[]) {
@@ -159,26 +209,47 @@ export function StudioShell() {
       <div className="vignette pointer-events-none absolute inset-0" />
       <div className="grain pointer-events-none absolute inset-0" />
       <div className="veil pointer-events-none absolute inset-0 z-10 bg-void" />
+      {phase === "gallery" && <div className="power-flash pointer-events-none absolute inset-0 z-30 bg-white" />}
       <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
       <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-display text-xl text-ink">NJengines</p>
-            <p className="kicker mt-1 text-mute">Estúdio</p>
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <p className="font-display text-xl tracking-wide text-ink">
+              NJ<span className="text-ember">ENGINE</span>
+            </p>
+            <p className="kicker mt-1 hidden text-mute sm:block">Console Web</p>
           </div>
-          <p className="kicker text-right text-mute">
-            12 baias
-            <span className="mt-1 block tabular-nums text-ink">
-              {filled} {filled === 1 ? "jogo" : "jogos"}
+          <div className="flex items-center gap-4 text-mute">
+            {phase === "gallery" && (
+              <p className="kicker hidden tabular-nums sm:block">
+                {filled} {filled === 1 ? "jogo" : "jogos"}
+              </p>
+            )}
+            <span className="flex items-center gap-1.5">
+              <Wifi className="size-3.5 text-ember" />
+              <span className="kicker hidden sm:inline">Online</span>
             </span>
-          </p>
+            <span className="kicker tabular-nums text-ink">{clock}</span>
+            <button
+              type="button"
+              className="ghost-btn pointer-events-auto min-h-9 px-2.5"
+              onClick={() => setMuted((m) => !m)}
+              aria-label={muted ? "Ativar som" : "Silenciar"}
+            >
+              {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </button>
+            <User className="size-4" />
+          </div>
         </header>
 
         {phase === "intro" ? (
           <div>
             <p className="font-display text-5xl tabular-nums text-ink">{String(progress).padStart(2, "0")}</p>
-            <p className="kicker mt-2 text-mute">{stageName(progress)}</p>
+            <p className="kicker mt-2 text-mute">
+              {bootLine(progress)}
+              <span className="boot-caret text-ember">▮</span>
+            </p>
             <div className="mt-4 h-px w-48 bg-line">
               <div
                 className="h-px w-full origin-left bg-ember"
@@ -187,11 +258,18 @@ export function StudioShell() {
             </div>
           </div>
         ) : (
-          <div className="flex items-end justify-between gap-4">
-            <p className="kicker max-w-xs text-mute">
-              {hover ? slotTitle(hover) : "Arraste o muro. Clique numa baia."}
-            </p>
-            <p className="kicker text-right text-ember">Em breve, os jogos</p>
+          <div className="flex flex-col gap-4">
+            <FocusPanel
+              slot={slots.find((slot) => slot.id === focusId) ?? null}
+              empty={filled === 0}
+            />
+            <div className="console-hints flex items-center justify-between gap-4 border-t border-line pt-3">
+              <p className="kicker text-mute">
+                <span className="hidden sm:inline">← → Navegar · Enter Abrir · Esc Voltar</span>
+                <span className="sm:hidden">Deslize · Toque para abrir</span>
+              </p>
+              <p className="kicker text-ember">NJENGINE OS</p>
+            </div>
           </div>
         )}
       </div>
@@ -237,6 +315,32 @@ export function StudioShell() {
         </>
       )}
     </main>
+  );
+}
+
+function FocusPanel({ slot, empty }: { slot: GameSlot | null; empty: boolean }) {
+  if (!slot) return <div className="min-h-24" />;
+  const title = slotTitle(slot);
+  const meta = [slot.genre, slot.platform, slot.year].filter((v) => v.trim()).join(" · ");
+  return (
+    <div className="max-w-md">
+      {empty && (
+        <p className="kicker mb-3 text-ember">
+          Sua biblioteca está pronta — os primeiros jogos chegam em breve
+        </p>
+      )}
+      <p className="kicker text-mute">Baia {slot.bay}</p>
+      <p className="font-display mt-1 text-3xl text-balance text-ink sm:text-4xl">{title}</p>
+      {meta && <p className="kicker mt-2 text-mute">{meta}</p>}
+      {slot.description.trim() && (
+        <p className="mt-2 line-clamp-2 max-w-sm text-sm leading-relaxed text-mute">
+          {slot.description}
+        </p>
+      )}
+      <p className="kicker mt-3 text-mute">
+        <span className="text-ink">Enter</span> {isFilled(slot) ? "Abrir" : "Ver baia"}
+      </p>
+    </div>
   );
 }
 
