@@ -347,7 +347,8 @@
 .nj-game-info h3 { margin: 0; color: var(--nj-text); font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
 .nj-game-info p { margin: 7px 0 0; color: var(--nj-muted); font-size: 0.82rem; line-height: 1.5; }
 .nj-game-info .nj-game-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.nj-game-info .nj-text-link { margin-top: 9px; }
+.nj-game-links { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 7px; }
+.nj-game-info .nj-text-link { min-height: 40px; margin-top: 0; font-size: 0.8rem; }
 .nj-catalog-screen .nj-page-heading { margin-bottom: 31px; }
 .nj-catalog-empty { min-height: min(380px, 45vh); }
 .nj-profile-note { margin: 15px 0 0; color: var(--nj-soft); font-size: 0.78rem; }

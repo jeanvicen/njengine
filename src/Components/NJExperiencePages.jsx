@@ -117,6 +117,8 @@ function UserGameCard({ game }) {
   const gameName = typeof game.title === "string" && game.title.trim() ? game.title.trim() : `Baia ${String(game.bay || "").padStart(2, "0")}`;
   const image = typeof game.imageUrl === "string" && game.imageUrl.startsWith("data:image/") ? game.imageUrl : "";
   const launchUrl = safeExternalUrl(game.playUrl);
+  const videoUrl = safeExternalUrl(game.videoUrl);
+  const gameMeta = [game.genre, game.platform, game.year].filter((value) => typeof value === "string" && value.trim()).join(" · ");
   return (
     <article className="nj-game-card">
       <div className="nj-game-art" aria-hidden="true">
@@ -125,9 +127,12 @@ function UserGameCard({ game }) {
       </div>
       <div className="nj-game-info">
         <h3>{gameName}</h3>
-        {typeof game.genre === "string" && game.genre.trim() && <p>{game.genre.trim()}</p>}
+        {gameMeta && <p>{gameMeta}</p>}
         {typeof game.description === "string" && game.description.trim() && <p className="nj-game-description">{game.description.trim()}</p>}
-        {launchUrl && <a className="nj-text-link" href={launchUrl} target="_blank" rel="noreferrer">Abrir jogo <ArrowUpRight size={15} /></a>}
+        {(launchUrl || videoUrl) && <div className="nj-game-links">
+          {launchUrl && <a className="nj-text-link" href={launchUrl} target="_blank" rel="noreferrer">Abrir jogo <ArrowUpRight size={15} /></a>}
+          {videoUrl && <a className="nj-text-link" href={videoUrl} target="_blank" rel="noreferrer">Assistir vídeo <ArrowUpRight size={15} /></a>}
+        </div>}
       </div>
     </article>
   );
