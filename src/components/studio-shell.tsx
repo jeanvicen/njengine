@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Cpu, Gamepad2, ImagePlus, Monitor, Play, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gamepad2, Volume2, VolumeX, ImagePlus, Play, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
 
@@ -14,43 +14,28 @@ import {
   type GameSlot,
 } from "@/studio/slots";
 
-const STARTUP_STEPS = [
-  "Initializing graphics core",
-  "Syncing library",
-  "Preparing game environment",
-  "Optimizing renderer",
-];
-
-type Screen = "boot" | "flash" | "black" | "dashboard";
-
 export function StudioShell() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const dragStartRef = useRef<number | null>(null);
-  const dragMovedRef = useRef(false);
+  const cursorRef = useRef<HTMLDivElement>(null);
   const [slots, setSlots] = useState<GameSlot[]>(createSlots);
   const [phase, setPhase] = useState<Phase>("intro");
   const [progress, setProgress] = useState(0);
-  const [screen, setScreen] = useState<Screen>("boot");
+  const [openingComplete, setOpeningComplete] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const [webgl, setWebgl] = useState(true);
   const [engineOn, setEngineOn] = useState(false);
   const [activeSlot, setActiveSlot] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
-  const [now, setNow] = useState(() => new Date());
+  const audioContextRef = useRef<AudioContext | null>(null);
   const slotsRef = useRef(slots);
-  const soundOnRef = useRef(soundOn);
   slotsRef.current = slots;
-  soundOnRef.current = soundOn;
 
   useEffect(() => {
     const saved = readSlots();
     setSlots(saved);
     slotsRef.current = saved;
-    const firstSaved = saved.findIndex(isFilled);
-    if (firstSaved >= 0) setActiveSlot(firstSaved);
     const canvas = canvasRef.current;
     if (!canvas) return;
     let dead = false;
@@ -67,7 +52,7 @@ export function StudioShell() {
         onPhase: (next) => setPhase(next),
         onProgress: (value) => setProgress(value),
         onSelect: (id) => setSelectedId(id),
-        onHover: () => {},
+        onHover: (id) => setHoverId(id),
         onFail: () => setWebgl(false),
       });
       if (dead) {
@@ -91,58 +76,46 @@ export function StudioShell() {
   }, [slots, engineOn]);
 
   useEffect(() => {
+    const finishOpening = window.setTimeout(() => {
+      engineRef.current?.skip();
+      setPhase("gallery");
+      setProgress(100);
+      setOpeningComplete(true);
+    }, 6500);
+    return () => window.clearTimeout(finishOpening);
+  }, []);
+
+  useEffect(() => {
     engineRef.current?.setSelected(selectedId);
   }, [selectedId, engineOn]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  // Three.js drives the real 12.6-second boot. If WebGL is unavailable, keep the same
-  // sequence and timing with a lightweight local fallback instead of leaving the UI stuck.
-  useEffect(() => {
-    if (webgl || screen !== "boot") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setProgress(100);
-      setPhase("gallery");
-      return;
-    }
-    const startedAt = performance.now();
-    const timer = window.setInterval(() => {
-      const value = Math.min(100, Math.round(((performance.now() - startedAt) / 12_600) * 100));
-      setProgress(value);
-      if (value >= 100) {
-        setPhase("gallery");
-        window.clearInterval(timer);
+    const onKey = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (event.key === "Escape") {
+        if (selectedId) setSelectedId(null);
       }
-    }, 100);
-    return () => window.clearInterval(timer);
-  }, [webgl, screen]);
-
-  // The reveal deliberately lands only after the engine's complete timeline.
-  useEffect(() => {
-    if (phase !== "gallery" || progress < 100) return;
-    setScreen("flash");
-    const toBlack = window.setTimeout(() => setScreen("black"), 110);
-    const toDashboard = window.setTimeout(() => setScreen("dashboard"), 440);
-    return () => {
-      window.clearTimeout(toBlack);
-      window.clearTimeout(toDashboard);
     };
-  }, [phase, progress]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId]);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const audio = new Audio("/intro.mp3");
     audio.preload = "auto";
     audio.loop = false;
-    audio.volume = 0.72;
+    audio.volume = 0.75;
     audioRef.current = audio;
+    let started = false;
     const kick = () => {
-      if (soundOnRef.current) void audio.play().catch(() => {});
+      if (started) return;
+      started = true;
+      void audio.play().catch(() => {});
     };
-    void audio.play().catch(() => {});
+    kick();
     window.addEventListener("pointerdown", kick, { once: true });
     window.addEventListener("keydown", kick, { once: true });
     return () => {
@@ -156,14 +129,7 @@ export function StudioShell() {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-    audio.muted = !soundOn;
-    if (soundOn && screen === "boot") void audio.play().catch(() => {});
-  }, [soundOn, screen]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || screen !== "dashboard") return;
+    if (!audio || phase !== "gallery") return;
     const fade = window.setInterval(() => {
       audio.volume = Math.max(0, audio.volume - 0.08);
       if (audio.volume <= 0) {
@@ -172,19 +138,23 @@ export function StudioShell() {
       }
     }, 120);
     return () => window.clearInterval(fade);
-  }, [screen]);
+  }, [phase]);
+
+  useEffect(() => {
+    const ring = cursorRef.current;
+    if (!ring) return;
+    const move = (event: PointerEvent) => {
+      const onCanvas = (event.target as HTMLElement | null)?.tagName === "CANVAS";
+      ring.style.opacity = onCanvas ? "1" : "0";
+      ring.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
+    };
+    window.addEventListener("pointermove", move);
+    return () => window.removeEventListener("pointermove", move);
+  }, []);
 
   const selected = slots.find((slot) => slot.id === selectedId) ?? null;
-  const total = slots.length || 1;
-  const current = slots[activeSlot] ?? slots[0];
-  const currentFilled = Boolean(current && isFilled(current));
-  const currentPlayHref = current ? safeHttpUrl(current.playUrl) : "";
-  const filledCount = slots.filter(isFilled).length;
-  const activeStep = Math.min(STARTUP_STEPS.length - 1, Math.floor(Math.max(0, progress) / 25));
-  const displayCards = [-1, 0, 1].map((offset) => {
-    const index = (activeSlot + offset + total) % total;
-    return { offset, index, slot: slots[index] };
-  }).filter((card) => Boolean(card.slot));
+  const hover = slots.find((slot) => slot.id === hoverId) ?? null;
+  const filled = slots.filter(isFilled).length;
 
   function persist(next: GameSlot[]) {
     setSlots(next);
@@ -192,7 +162,7 @@ export function StudioShell() {
   }
 
   function playUiSound(frequency = 520) {
-    if (!soundOnRef.current) return;
+    if (!soundOn) return;
     try {
       const Context = window.AudioContext;
       if (!Context) return;
@@ -205,7 +175,7 @@ export function StudioShell() {
       oscillator.frequency.setValueAtTime(frequency, context.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.72, context.currentTime + 0.075);
       gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.055, context.currentTime + 0.008);
       gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.095);
       oscillator.connect(gain);
       gain.connect(context.destination);
@@ -217,176 +187,104 @@ export function StudioShell() {
   }
 
   function moveSelection(next: number) {
-    const wrapped = (next + total) % total;
+    const wrapped = (next + 3) % 3;
     setActiveSlot(wrapped);
-    playUiSound(440 + wrapped * 8);
-  }
-
-  function activateCurrent() {
-    if (!current) return;
-    if (currentPlayHref) {
-      window.open(currentPlayHref, "_blank", "noopener,noreferrer");
-      playUiSound(660);
-    } else {
-      setSelectedId(current.id);
-    }
+    playUiSound(460 + wrapped * 85);
   }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (screen !== "dashboard") return;
-      const target = event.target as HTMLElement | null;
-      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable) return;
-      if (selectedId) return;
-      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
-        event.preventDefault();
-        moveSelection(activeSlot + 1);
-      } else if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
-        event.preventDefault();
-        moveSelection(activeSlot - 1);
-      } else if (event.key === "Enter" && !target?.closest("button, a")) {
-        event.preventDefault();
-        activateCurrent();
-      }
+      if (!openingComplete && (phase !== "gallery" || progress < 100)) return;
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") moveSelection(activeSlot + 1);
+      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") moveSelection(activeSlot - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeSlot, current, currentPlayHref, screen, selectedId, soundOn, total]);
+  }, [activeSlot, openingComplete, phase, progress, soundOn]);
 
   return (
-    <main className="nj-console fixed inset-0 overflow-hidden bg-void text-ink">
-      <canvas ref={canvasRef} className="stage-canvas absolute inset-0 h-full w-full" aria-hidden="true" />
-      <div className="console-vignette pointer-events-none absolute inset-0" />
-      <div className="console-grain pointer-events-none absolute inset-0" />
+    <main className="fixed inset-0 overflow-hidden bg-void text-ink">
+      <canvas ref={canvasRef} className="stage-canvas absolute inset-0 h-full w-full" />
+      <div className="vignette pointer-events-none absolute inset-0" />
+      <div className="grain pointer-events-none absolute inset-0" />
+      <div className="veil pointer-events-none absolute inset-0 z-10 bg-void" />
+      <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
-      {screen === "boot" && (
-        <section className="boot-screen absolute inset-0 z-30 flex flex-col items-center justify-center" aria-label="Iniciando NJENGINE">
-          <div className="boot-mark" aria-hidden="true">
-            {"NJENGINE".split("").map((letter, index) => (
-              <span key={`${letter}-${index}`} className="boot-letter" style={{ animationDelay: `${index * 65}ms` }}>{letter}</span>
-            ))}
-          </div>
-          <p className="boot-caption">CONSOLE SYSTEM · STARTUP SEQUENCE</p>
-          <div className="boot-status" aria-live="polite">
-            <div className="boot-step-list">
-              {STARTUP_STEPS.map((step, index) => (
-                <p key={step} className={`boot-step ${index === activeStep ? "is-current" : ""} ${index < activeStep ? "is-done" : ""}`}>
-                  <span className="boot-step-marker">{index < activeStep ? "✓" : index === activeStep ? "›" : "·"}</span>{step}
-                </p>
-              ))}
-            </div>
-            <div className="boot-progress-meta"><span>ENGINE STARTUP</span><span>{Math.max(0, Math.min(100, progress))}%</span></div>
-            <div className="boot-progress-track"><span style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} /></div>
-          </div>
-          <div className="boot-baseline"><span><Cpu aria-hidden="true" /> NJENGINE CORE</span><span>LOCAL SYSTEM</span></div>
-        </section>
+      {!openingComplete && phase !== "gallery" && (
+        <div className="opening-prompt absolute inset-x-0 bottom-12 z-20 flex flex-col items-center gap-3 px-5 text-center">
+          <p className="kicker text-ember">NJENGINE · INICIANDO</p>
+          <p className="opening-copy">Preparando sua biblioteca de jogos</p>
+          <button
+            type="button"
+            className="opening-skip"
+            onClick={() => {
+              engineRef.current?.skip();
+              setPhase("gallery");
+              setProgress(100);
+              setOpeningComplete(true);
+            }}
+          >
+            PULAR ABERTURA <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
       )}
-      {screen === "flash" && <div className="boot-flash absolute inset-0 z-40" aria-hidden="true" />}
-      {screen === "black" && <div className="boot-black absolute inset-0 z-40" aria-hidden="true" />}
 
-      {screen === "dashboard" && (
-        <section className="console-screen absolute inset-0 z-20 flex flex-col" aria-label="Biblioteca NJENGINE">
-          <header className="console-header">
-            <div className="console-brand-lockup">
-              <div className="console-brand-glyph" aria-hidden="true"><Gamepad2 /></div>
-              <div><p className="console-wordmark">NJENGINE</p><p className="console-brand-caption">PERSONAL CONSOLE</p></div>
+      {(openingComplete || (phase === "gallery" && progress >= 100)) && (
+        <section className="selector-screen absolute inset-0 z-20 flex flex-col" aria-label="Seletor de jogos NJengine">
+          <header className="selector-header flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="brand-mark"><Gamepad2 aria-hidden="true" /></div>
+              <div><p className="selector-brand">NJENGINE</p><p className="selector-subtitle">SUA PRÓXIMA JOGADA</p></div>
             </div>
-            <div className="console-hud">
-              <div className="console-status" aria-label="Biblioteca local"><span className="status-pulse" /><span>LOCAL LIBRARY</span></div>
-              <div className="device-status" title="Dados salvos neste navegador"><Monitor aria-hidden="true" /><span><strong>ESTE DISPOSITIVO</strong><small>DADOS NESTE NAVEGADOR</small></span></div>
-              <time className="console-clock" dateTime={now.toISOString()}>{now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
-              <button className="console-sound" type="button" onClick={() => setSoundOn((value) => !value)} aria-label={soundOn ? "Desativar som" : "Ativar som"} aria-pressed={soundOn}>
-                {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}<span>SOM</span>
-              </button>
-            </div>
+            <button className="sound-toggle" type="button" onClick={() => setSoundOn((value) => !value)} aria-label={soundOn ? "Desativar sons" : "Ativar sons"}>
+              {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+              <span>{soundOn ? "SOM LIGADO" : "SOM DESLIGADO"}</span>
+            </button>
           </header>
 
-          <div className="console-content">
-            <div className="library-heading">
-              <div className="library-eyebrow"><span className="ember-rule" /> NJENGINE · BIBLIOTECA</div>
-              <h1>{filledCount ? "Sua coleção" : "Sua próxima jogada"}</h1>
-              <p>{filledCount ? "Seus jogos, prontos para continuar." : "Um espaço seu. Adicione jogos quando quiser."}</p>
+          <div className="selector-content">
+            <div className="selector-heading"><p className="kicker">BIBLIOTECA</p><h1>Escolha seu jogo</h1><p className="selector-hint">Um novo universo começa aqui.</p></div>
+            <div className="game-rail" role="tablist" aria-label="Espaços de jogo">
+              {[0, 1, 2].map((index) => (
+                <button key={index} type="button" role="tab" aria-selected={activeSlot === index} className={`empty-game-card ${activeSlot === index ? "is-active" : ""}`} onClick={() => moveSelection(index)}>
+                  <span className="card-number">0{index + 1}</span>
+                  <span className="empty-card-symbol"><Gamepad2 aria-hidden="true" /></span>
+                  <span className="card-label">ESPAÇO VAZIO</span>
+                  <span className="card-status">JOGOS EM BREVE</span>
+                </button>
+              ))}
             </div>
-
-            <div
-              className="game-rail"
-              role="region"
-              aria-label={`Carrossel da biblioteca, baia ${current?.bay ?? "01"} de ${total}`}
-              onPointerDown={(event) => {
-                if (event.button !== 0) return;
-                dragStartRef.current = event.clientX;
-                dragMovedRef.current = false;
-              }}
-              onPointerUp={(event) => {
-                const start = dragStartRef.current;
-                dragStartRef.current = null;
-                if (start === null) return;
-                const distance = event.clientX - start;
-                if (Math.abs(distance) > 38) {
-                  dragMovedRef.current = true;
-                  moveSelection(activeSlot + (distance < 0 ? 1 : -1));
-                }
-              }}
-              onPointerCancel={() => { dragStartRef.current = null; }}
-            >
-              {displayCards.map(({ offset, index, slot }) => {
-                const filled = isFilled(slot);
-                const artwork = slot.imageUrl || (filled ? paintCoverDataUrl({ bay: slot.bay, title: slot.title, filled }) : "");
-                const title = slot.title.trim() || (filled ? `Baia ${slot.bay}` : "Baia vazia");
-                return (
-                  <button
-                    key={slot.id}
-                    type="button"
-                    className={`game-card ${offset === 0 ? "game-card--active" : offset < 0 ? "game-card--left" : "game-card--right"} ${filled ? "has-game" : "is-empty"}`}
-                    aria-label={`${title}, baia ${slot.bay}${filled ? ", jogo salvo neste navegador" : ", espaço vazio"}`}
-                    aria-current={offset === 0 ? "true" : undefined}
-                    onClick={() => {
-                      if (dragMovedRef.current) {
-                        dragMovedRef.current = false;
-                        return;
-                      }
-                      if (offset !== 0) moveSelection(index);
-                      else setSelectedId(slot.id);
-                    }}
-                  >
-                    {artwork && <img src={artwork} alt={slot.imageUrl && slot.title ? `Capa de ${slot.title}` : ""} className="game-card-art" draggable={false} />}
-                    <span className="game-card-shade" />
-                    <span className="game-card-topline"><span>BAIA {slot.bay}</span>{filled && <span className="game-card-saved">LOCAL</span>}</span>
-                    {!filled && <span className="empty-glyph" aria-hidden="true"><Gamepad2 /></span>}
-                    <span className="game-card-copy"><strong>{title}</strong><small>{filled ? [slot.genre, slot.platform].filter(Boolean).join(" · ") || "Jogo salvo neste dispositivo" : "ESPAÇO DISPONÍVEL"}</small></span>
-                  </button>
-                );
-              })}
+            <div className="rail-controls">
+              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot - 1)} aria-label="Espaço anterior"><ChevronLeft /></button>
+              <div className="rail-dots" aria-label={`Espaço ${activeSlot + 1} de 3`}>{[0, 1, 2].map((index) => <span key={index} className={activeSlot === index ? "active" : ""} />)}</div>
+              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot + 1)} aria-label="Próximo espaço"><ChevronRight /></button>
             </div>
-
-            <div className="carousel-controls">
-              <button type="button" className="carousel-arrow" onClick={() => moveSelection(activeSlot - 1)} aria-label="Baia anterior"><ChevronLeft /></button>
-              <div className="carousel-position" aria-live="polite"><span>{String(activeSlot + 1).padStart(2, "0")}</span><i /><span>{String(total).padStart(2, "0")}</span></div>
-              <button type="button" className="carousel-arrow" onClick={() => moveSelection(activeSlot + 1)} aria-label="Próxima baia"><ChevronRight /></button>
-            </div>
-
-            <div className="game-details" aria-live="polite">
-              <div className="game-details-copy">
-                <p className="game-details-kicker">BAIA {current?.bay ?? "01"} <span>·</span> {currentFilled ? "NA SUA BIBLIOTECA" : "AGUARDANDO SEU JOGO"}</p>
-                <h2>{current?.title.trim() || (currentFilled ? `Baia ${current?.bay}` : "Sua biblioteca está vazia")}</h2>
-                <p className="game-description">{currentFilled ? current?.description.trim() || [current?.genre, current?.platform, current?.year].filter(Boolean).join(" · ") || "" : "Configure uma baia para adicionar seu primeiro jogo. Tudo fica salvo apenas neste navegador."}</p>
-              </div>
-              <div className="game-actions">
-                {currentPlayHref ? (
-                  <a className="game-action-primary" href={currentPlayHref} target="_blank" rel="noreferrer" onClick={() => playUiSound(660)}><Play aria-hidden="true" fill="currentColor" /> JOGAR</a>
-                ) : (
-                  <button type="button" className="game-action-primary" onClick={() => setSelectedId(current?.id ?? null)}><Gamepad2 aria-hidden="true" /> {currentFilled ? "EDITAR JOGO" : "CONFIGURAR BAIA"}</button>
-                )}
-                {currentFilled && currentPlayHref && <button type="button" className="game-action-secondary" onClick={() => setSelectedId(current?.id ?? null)}>EDITAR FICHA</button>}
-              </div>
-            </div>
+            <p className="coming-soon">A biblioteca está sendo preparada<span> — em breve, novas aventuras.</span></p>
           </div>
-
-          <footer className="console-footer"><span><b>NJENGINE</b><i /> {filledCount} {filledCount === 1 ? "JOGO" : "JOGOS"} SALVOS LOCALMENTE</span><span className="footer-controls">← → NAVEGAR <i /> ENTER ABRIR</span></footer>
+          <footer className="selector-footer"><span>© NJENGINE</span><span>← → NAVEGAR <i /> A / D</span></footer>
         </section>
       )}
 
-      {!webgl && screen === "dashboard" && <div className="webgl-fallback-mark" aria-hidden="true">NJENGINE</div>}
+      {!webgl && (
+        <div className="absolute inset-0 z-10 overflow-y-auto bg-void pt-28 pb-16">
+          <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 lg:grid-cols-4">
+            {slots.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                onClick={() => setSelectedId(slot.id)}
+                className="overflow-hidden rounded-2xl border border-line bg-face text-left"
+              >
+                <img
+                  src={slot.imageUrl || paintCoverDataUrl({ bay: slot.bay, title: slot.title, filled: isFilled(slot) })}
+                  alt={slotTitle(slot)}
+                  className="aspect-[4/5] w-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {selected && (
         <>
