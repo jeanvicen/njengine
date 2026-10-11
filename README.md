@@ -7,7 +7,7 @@ NJengine is a personal game library for the web. Each visit opens with a cinemat
 - Keeps up to 12 personal game entries in this browser, including title, description, genre, platform, year, cover, trailer URL, and a real HTTP(S) Play link.
 - Provides search, genre filters, and sorting in the library view.
 - Shows up to three real games at once in a horizontal carousel; keyboard, touch, and compatible gamepad controls move the selection.
-- Forms the NJ Engine wordmark at startup, fades to black, flashes briefly, then reveals the library.
+- At startup, 3D cover-like tiles form `NJENGINE`; the camera pulls back through real saved games before a blackout, flash, and reveal of the library. The original intro sound and optional navigation sounds are restored.
 - Opens only links supplied in a game's own entry. It does not create sample games, destinations, or metadata.
 
 ## Web edition limits

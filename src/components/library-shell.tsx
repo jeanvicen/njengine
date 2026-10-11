@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Dossier } from "@/components/studio-shell";
 import { paintCoverDataUrl } from "@/studio/covers";
+import type { EngineHandle } from "@/studio/create-engine";
 import {
   createSlots,
   isFilled,
@@ -41,6 +42,7 @@ export function LibraryShell() {
   const [ready, setReady] = useState(false);
   const [bootVisible, setBootVisible] = useState(true);
   const [bootPhase, setBootPhase] = useState<BootPhase>("forming");
+  const [introFinished, setIntroFinished] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState(true);
   const [clock, setClock] = useState("");
@@ -60,17 +62,23 @@ export function LibraryShell() {
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !introFinished) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timings = reducedMotion
-      ? [["reveal", 250], ["done", 950]] as const
-      : [["blackout", 2450], ["flash", 3050], ["reveal", 3240], ["done", 4140]] as const;
-    const timers = timings.map(([stage, delay]) => window.setTimeout(() => {
-      if (stage === "done") setBootVisible(false);
-      else setBootPhase(stage);
-    }, delay));
-    return () => timers.forEach(window.clearTimeout);
-  }, [ready]);
+    if (reducedMotion) {
+      setBootPhase("reveal");
+      const timer = window.setTimeout(() => setBootVisible(false), 550);
+      return () => window.clearTimeout(timer);
+    }
+    setBootPhase("blackout");
+    const flash = window.setTimeout(() => setBootPhase("flash"), 420);
+    const reveal = window.setTimeout(() => setBootPhase("reveal"), 610);
+    const done = window.setTimeout(() => setBootVisible(false), 1510);
+    return () => {
+      window.clearTimeout(flash);
+      window.clearTimeout(reveal);
+      window.clearTimeout(done);
+    };
+  }, [ready, introFinished]);
 
   useEffect(() => {
     if (!bootVisible) return;
@@ -78,6 +86,7 @@ export function LibraryShell() {
     audio.preload = "auto";
     audio.volume = 0.7;
     audioRef.current = audio;
+    void audio.play().catch(() => {});
     const start = () => {
       if (soundRef.current) void audio.play().catch(() => {});
     };
@@ -179,29 +188,125 @@ export function LibraryShell() {
           canAdd={canAdd}
           onAdd={addGame}
           onSelect={setSelectedId}
+          soundOn={soundOn}
+          onToggleSound={toggleSound}
           onNavigate={() => playUiSound(640, 0.075, "sine")}
         />
         {dossier}
       </div>
-      {bootVisible && <BootIntro phase={bootPhase} soundOn={soundOn} onToggleSound={toggleSound} />}
+      {bootVisible && <BootIntro phase={bootPhase} slots={slots} ready={ready} soundOn={soundOn} onToggleSound={toggleSound} onComplete={() => setIntroFinished(true)} />}
     </main>
   );
 }
 
-function BootIntro({ phase, soundOn, onToggleSound }: { phase: BootPhase; soundOn: boolean; onToggleSound: () => void }) {
-  const letters = "NJ ENGINE".split("");
+function BootIntro({
+  phase,
+  slots,
+  ready,
+  soundOn,
+  onToggleSound,
+  onComplete,
+}: {
+  phase: BootPhase;
+  slots: GameSlot[];
+  ready: boolean;
+  soundOn: boolean;
+  onToggleSound: () => void;
+  onComplete: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<EngineHandle | null>(null);
+  const completeRef = useRef(onComplete);
+  const [webgl, setWebgl] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [cameraPullingBack, setCameraPullingBack] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const games = slots.filter(isFilled);
+  const gameSignature = games.map((game) => game.id).join("|");
+  completeRef.current = onComplete;
+
+  useEffect(() => {
+    if (!ready) return;
+    let dead = false;
+    let handle: EngineHandle | null = null;
+    let fallbackTimer: number | null = null;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setReducedMotion(reduced);
+
+    if (reduced) {
+      setProgress(100);
+      fallbackTimer = window.setTimeout(() => completeRef.current(), 900);
+      return () => {
+        dead = true;
+        if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+      };
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      setWebgl(false);
+      fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
+      return () => {
+        dead = true;
+        if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+      };
+    }
+
+    void import("@/studio/create-engine").then(({ createEngine }) => {
+      if (dead || !canvasRef.current) return;
+      handle = createEngine({
+        canvas: canvasRef.current,
+        slots: games,
+        reduced: false,
+        onPhase: (next) => {
+          if (next === "gallery") setCameraPullingBack(true);
+        },
+        onProgress: (value) => {
+          setProgress(value);
+          if (value >= 100) completeRef.current();
+        },
+        onSelect: () => {},
+        onHover: () => {},
+        onFocus: () => {},
+        onFail: () => {
+          setWebgl(false);
+          fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
+        },
+      });
+      if (dead) {
+        handle.dispose();
+        return;
+      }
+      engineRef.current = handle;
+    }).catch(() => {
+      if (dead) return;
+      setWebgl(false);
+      fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
+    });
+
+    return () => {
+      dead = true;
+      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
+      handle?.dispose();
+      engineRef.current = null;
+    };
+  }, [ready, gameSignature]);
+
+  const useFallback = reducedMotion || !webgl;
   return (
     <section className={`nj-boot nj-boot--${phase}`} aria-label="Abertura do NJ Engine" aria-live="polite">
-      {phase === "forming" && (
-        <div className="nj-boot-content">
-          <img className="nj-boot-emblem" src="/favicon.svg" alt="" />
-          <h1 className="nj-boot-wordmark" aria-label="NJ Engine">
-            {letters.map((letter, index) => (
-              <span key={`${letter}-${index}`} aria-hidden="true" className={letter === " " ? "nj-boot-space" : "nj-boot-letter"} style={{ animationDelay: `${index * 78}ms` }}>{letter === " " ? "\u00a0" : letter}</span>
-            ))}
-          </h1>
+      {!useFallback && <canvas ref={canvasRef} className="nj-boot-canvas" aria-hidden="true" />}
+      <div className="nj-boot-shade" aria-hidden="true" />
+      {useFallback ? (
+        <div className="nj-boot-fallback">
+          <img src="/favicon.svg" alt="" />
+          <h1 className="nj-boot-fallback-name">NJ<span>ENGINE</span></h1>
           <p className="nj-boot-status"><span className="nj-boot-status-dot" /> CARREGANDO SUA BIBLIOTECA</p>
-          <div className="nj-boot-progress" aria-hidden="true"><span /></div>
+        </div>
+      ) : (
+        <div className="nj-boot-hud">
+          <p className="nj-boot-status"><span className="nj-boot-status-dot" /> {cameraPullingBack ? "ABRINDO SUA BIBLIOTECA" : "CARTAS SE ORGANIZANDO"}</p>
+          <div className="nj-boot-progress" aria-hidden="true"><span style={{ width: `${progress}%` }} /></div>
         </div>
       )}
       {phase === "forming" && (
@@ -220,8 +325,10 @@ function LibraryView({
   interactive,
   clock,
   canAdd,
+  soundOn,
   onAdd,
   onSelect,
+  onToggleSound,
   onNavigate,
 }: {
   slots: GameSlot[];
@@ -229,8 +336,10 @@ function LibraryView({
   interactive: boolean;
   clock: string;
   canAdd: boolean;
+  soundOn: boolean;
   onAdd: () => void;
   onSelect: (id: string) => void;
+  onToggleSound: () => void;
   onNavigate: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -373,6 +482,9 @@ function LibraryView({
         <header className="nj-topbar">
           <div className="nj-time"><span className="nj-status-dot" /> Neste aparelho <span className="nj-divider" /> {clock || "—:—"}</div>
           <div className="nj-actions">
+            <button type="button" className="nj-sound-toggle" onClick={onToggleSound} aria-label={soundOn ? "Desativar sons" : "Ativar sons"}>
+              {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+            </button>
             <button type="button" className="nj-button nj-button--primary" onClick={onAdd} disabled={!canAdd || !ready}>
               <CirclePlus aria-hidden="true" /><span>Adicionar jogo</span>
             </button>

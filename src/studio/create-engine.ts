@@ -27,10 +27,10 @@ type EngineOptions = {
   onFail: () => void;
 };
 
-const T_FORM0 = 1.4;
-const T_FORM1 = 8.8;
-const T_HOLD = 12.2;
-const T_END = 15.8;
+const T_FORM0 = 0.35;
+const T_FORM1 = 2.7;
+const T_HOLD = 3.55;
+const T_END = 5.8;
 const CARD_W = 3.2;
 const CARD_H = 4;
 
