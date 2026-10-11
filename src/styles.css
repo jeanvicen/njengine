@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #07080b;
-  --color-panel: #101114;
-  --color-face: #17191f;
+  --color-void: #0a0a0f;
+  --color-panel: #12121a;
+  --color-face: #1a1a24;
   --color-ink: #ece8de;
   --color-mute: #8d877c;
   --color-line: #2e2b26;
@@ -309,3 +309,46 @@
 .opening-skip { display: inline-flex; min-height: 2.8rem; align-items: center; gap: .35rem; border: 1px solid rgba(212,175,55,.35); border-radius: 999px; padding: 0 1rem; background: rgba(7,8,11,.72); color: var(--color-ink); font-size: .62rem; letter-spacing: .13em; }
 .opening-skip:hover { border-color: var(--color-ember); color: var(--color-ember); }
 .opening-skip svg { width: 1rem; }
+
+/* Flash de "ligar" do console: branco -> preto -> transparente */
+.power-flash {
+  animation: power-flash 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes power-flash {
+  0% { opacity: 0; background: #ffffff; }
+  12% { opacity: 1; background: #ffffff; }
+  35% { opacity: 1; background: #0a0a0f; }
+  100% { opacity: 0; background: #0a0a0f; }
+}
+
+.boot-caret {
+  margin-left: 0.4em;
+  animation: boot-caret 0.85s steps(2, start) infinite;
+}
+
+@keyframes boot-caret {
+  to { visibility: hidden; }
+}
+
+.console-hints {
+  backdrop-filter: blur(6px);
+}
+
+/* Sugestão de modo paisagem no celular */
+.rotate-hint {
+  backdrop-filter: blur(10px);
+}
+
+.rotate-phone {
+  width: 34px;
+  height: 58px;
+  border: 2px solid var(--color-ember);
+  border-radius: 8px;
+  animation: rotate-phone 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes rotate-phone {
+  0%, 20% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}

@@ -8,6 +8,8 @@ export type Phase = "intro" | "gallery";
 export type EngineHandle = {
   sync: (slots: GameSlot[]) => void;
   setSelected: (id: string | null) => void;
+  moveFocus: (dir: number) => void;
+  confirm: () => void;
   skip: () => void;
   replay: () => void;
   dispose: () => void;
@@ -21,13 +23,14 @@ type EngineOptions = {
   onProgress: (value: number) => void;
   onSelect: (id: string | null) => void;
   onHover: (id: string | null) => void;
+  onFocus: (id: string | null) => void;
   onFail: () => void;
 };
 
-const T_FORM0 = 1.1;
-const T_FORM1 = 7.2;
-const T_HOLD = 9.8;
-const T_END = 12.6;
+const T_FORM0 = 1.4;
+const T_FORM1 = 8.8;
+const T_HOLD = 12.2;
+const T_END = 15.8;
 const CARD_W = 3.2;
 const CARD_H = 4;
 
@@ -44,6 +47,7 @@ type Bay = {
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   frame: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>;
   id: string;
+  index: number;
   base: THREE.Vector3;
   rotY: number;
   lift: number;
@@ -108,21 +112,22 @@ export function createEngine(options: EngineOptions): EngineHandle {
     });
   } catch {
     options.onFail();
-    return { sync() {}, setSelected() {}, skip() {}, replay() {}, dispose() {} };
+    return { sync() {}, setSelected() {}, moveFocus() {}, confirm() {}, skip() {}, replay() {}, dispose() {} };
   }
 
   if (!renderer.getContext()) {
     options.onFail();
     renderer.dispose();
-    return { sync() {}, setSelected() {}, skip() {}, replay() {}, dispose() {} };
+    return { sync() {}, setSelected() {}, moveFocus() {}, confirm() {}, skip() {}, replay() {}, dispose() {} };
   }
 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.18;
-  renderer.setClearColor(0x07080b, 1);
+  renderer.setClearColor(0x0a0a0f, 1);
 
   const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0a0f, 12, 34);
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 400);
   const logo = buildLogo();
 
@@ -211,18 +216,13 @@ export function createEngine(options: EngineOptions): EngineHandle {
   const cardGeo = new THREE.PlaneGeometry(CARD_W, CARD_H);
   const frameGeo = new THREE.PlaneGeometry(CARD_W * 1.045, CARD_H * 1.04);
   const bays: Bay[] = [];
-  const cols = 4;
-  const rows = Math.ceil(options.slots.length / cols);
-  const gapX = CARD_W + 0.42;
-  const gapY = CARD_H + 0.48;
+  const gapX = CARD_W * 0.94;
 
   options.slots.forEach((slot, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = (col - (cols - 1) / 2) * gapX;
-    const y = ((rows - 1) / 2 - row) * gapY;
-    const rotY = (col - (cols - 1) / 2) * 0.06;
-    const z = -Math.abs(col - (cols - 1) / 2) * 0.34;
+    const x = i * gapX;
+    const y = 0;
+    const rotY = 0;
+    const z = 0;
     const mat = new THREE.MeshStandardMaterial({
       roughness: 0.24,
       metalness: 0.68,
@@ -250,6 +250,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
       mesh,
       frame,
       id: slot.id,
+      index: i,
       base: new THREE.Vector3(x, y, z),
       rotY,
       lift: 0,
@@ -298,10 +299,10 @@ export function createEngine(options: EngineOptions): EngineHandle {
     progress: options.reduced ? 100 : -1,
     selected: null as string | null,
     hover: null as string | null,
-    panX: 0,
-    panY: 0,
-    velX: 0,
-    velY: 0,
+    focus: 0,
+    focusTarget: 0,
+    focusVel: 0,
+    lastFocusId: null as string | null,
     ndcX: 0,
     ndcY: 0,
     dragging: false,
@@ -312,8 +313,6 @@ export function createEngine(options: EngineOptions): EngineHandle {
     aspect: 1,
     fov: 28,
     dist: 16,
-    limitX: 1,
-    limitY: 1,
   };
 
   let raf = 0;
@@ -374,19 +373,16 @@ export function createEngine(options: EngineOptions): EngineHandle {
     renderer.setSize(w, h, false);
 
     const vTan = Math.tan(THREE.MathUtils.degToRad(state.fov / 2));
-    const wallW = (cols - 1) * gapX + CARD_W;
-    const wallH = (rows - 1) * gapY + CARD_H;
     if (state.aspect >= 1.05) {
-      const distY = (wallH * 1.16) / (2 * vTan);
-      const distX = (wallW * 1.1) / (2 * vTan * state.aspect);
-      state.dist = Math.max(distY, distX);
+      state.dist = (CARD_H * 1.62) / (2 * vTan);
     } else {
-      state.dist = (CARD_H * 1.45) / (2 * vTan);
+      // mobile (retrato ou paisagem): tile em foco domina a tela
+      state.dist = (CARD_W * 1.05) / (vTan * state.aspect);
     }
-    const viewH = vTan * state.dist;
-    const viewW = viewH * state.aspect;
-    state.limitX = Math.max(0.4, wallW / 2 - viewW + CARD_W * 0.2);
-    state.limitY = Math.max(0.3, wallH / 2 - viewH + CARD_H * 0.15);
+    if (scene.fog instanceof THREE.Fog) {
+      scene.fog.near = state.dist * 0.9;
+      scene.fog.far = state.dist * 2.7;
+    }
   };
 
   const observer = new ResizeObserver(() => resize());
@@ -448,27 +444,48 @@ export function createEngine(options: EngineOptions): EngineHandle {
     state.px = event.clientX;
     state.py = event.clientY;
     if (state.phase !== "gallery") return;
-    const sens = state.dist * 0.00115;
-    state.panX = THREE.MathUtils.clamp(state.panX - dx * sens, -state.limitX, state.limitX);
-    state.panY = THREE.MathUtils.clamp(state.panY + dy * sens, -state.limitY, state.limitY);
-    state.velX = -dx * sens;
-    state.velY = dy * sens;
+    const dFocus = -dx / (rect.width * 0.24);
+    state.focusTarget = THREE.MathUtils.clamp(state.focusTarget + dFocus, 0, bays.length - 1);
+    state.focus = state.focusTarget;
+    state.focusVel = dFocus;
   };
 
   const onPointerUp = (event: PointerEvent) => {
     if (!state.dragging) return;
     state.dragging = false;
     if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-    if (state.moved || state.t < T_HOLD + (T_END - T_HOLD) * 0.72) return;
+    if (state.moved) {
+      state.focusTarget = THREE.MathUtils.clamp(
+        Math.round(state.focusTarget + state.focusVel * 6),
+        0,
+        bays.length - 1,
+      );
+      state.focusVel = 0;
+      return;
+    }
+    if (state.t < T_HOLD + (T_END - T_HOLD) * 0.72) return;
     const id = hitBay(event.clientX, event.clientY);
-    options.onSelect(id);
+    if (!id) {
+      options.onSelect(null);
+      return;
+    }
+    const hit = bays.find((bay) => bay.id === id);
+    if (hit && hit.index !== Math.round(state.focusTarget)) {
+      state.focusTarget = hit.index;
+    } else {
+      options.onSelect(id);
+    }
   };
 
   const onWheel = (event: WheelEvent) => {
     if (state.phase !== "gallery") return;
     event.preventDefault();
-    state.panY = THREE.MathUtils.clamp(state.panY + event.deltaY * 0.004, -state.limitY, state.limitY);
-    state.panX = THREE.MathUtils.clamp(state.panX + event.deltaX * 0.004, -state.limitX, state.limitX);
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    state.focusTarget = THREE.MathUtils.clamp(
+      state.focusTarget + delta * 0.0035,
+      0,
+      bays.length - 1,
+    );
   };
 
   canvas.addEventListener("pointerdown", onPointerDown);
@@ -496,23 +513,21 @@ export function createEngine(options: EngineOptions): EngineHandle {
 
     const far = logoDistance();
     introPos.set(Math.sin(state.t * 0.15) * 0.15, 0.25, lerp(startZ, far, u));
-    if (!state.dragging) {
-      state.panX = THREE.MathUtils.clamp(state.panX + state.velX, -state.limitX, state.limitX);
-      state.panY = THREE.MathUtils.clamp(state.panY + state.velY, -state.limitY, state.limitY);
-      state.velX *= Math.exp(-2.6 * dt);
-      state.velY *= Math.exp(-2.6 * dt);
-    }
+    state.focus = damp(state.focus, state.focusTarget, 7, dt);
+    const camX = state.focus * gapX;
     galleryPos.set(
-      state.panX + state.ndcX * 0.28 * g,
-      state.panY + 0.05 + state.ndcY * 0.16 * g,
+      camX + state.ndcX * 0.3 * g,
+      0.12 + state.ndcY * 0.18 * g,
       state.dist,
     );
     introLook.set(0, 0.15, 0);
-    galleryLook.set(state.panX, state.panY, 0);
+    galleryLook.set(camX, -0.05, 0);
     camera.position.lerpVectors(introPos, galleryPos, g);
     look.lerpVectors(introLook, galleryLook, g);
     camera.lookAt(look);
-    core.intensity = (0.4 + u * 7.5) * (1 - g);
+    const holdPulse = clamp01((state.t - T_FORM1) / (T_HOLD - T_FORM1)) * (1 - g);
+    core.intensity =
+      (0.4 + u * 7.5) * (1 - g) * (1 + Math.sin(state.t * 5.2) * 0.22 * holdPulse);
 
     const swarmOpacity = 1 - g;
     const showSwarm = swarmOpacity > 0.02;
@@ -538,31 +553,51 @@ export function createEngine(options: EngineOptions): EngineHandle {
       bucket.mat.opacity = swarmOpacity;
     }
 
+    if (state.phase === "gallery" && bays.length > 0) {
+      const focusIndex = Math.min(
+        bays.length - 1,
+        Math.max(0, Math.round(state.focusTarget)),
+      );
+      const focusId = bays[focusIndex]?.id ?? null;
+      if (focusId !== state.lastFocusId) {
+        state.lastFocusId = focusId;
+        options.onFocus(focusId);
+      }
+    }
+
     const pointerHover = state.hover;
     for (const bay of bays) {
       const appear = g;
       bay.mesh.visible = appear > 0.03;
-      const hot = bay.id === state.selected || bay.id === pointerHover;
-      const targetLift = bay.id === state.selected ? 0.62 : bay.id === pointerHover ? 0.34 : 0;
+      const d = bay.index - state.focus;
+      const ad = Math.abs(d);
+      const focused = ad < 0.5;
+      const hot = bay.id === state.selected || (focused && bay.id === pointerHover);
+      const targetLift = bay.id === state.selected ? 0.55 : focused ? 0.3 : 0;
       bay.lift = damp(bay.lift, targetLift, 8, dt);
-      bay.glow = damp(bay.glow, hot ? 0.22 : 0.045, 8, dt);
-      if (bay.id !== pointerHover) {
+      bay.glow = damp(bay.glow, bay.id === state.selected ? 0.42 : focused ? 0.26 : 0.035, 8, dt);
+      if (bay.id !== pointerHover || !focused) {
         bay.tiltX = damp(bay.tiltX, 0, 8, dt);
         bay.tiltY = damp(bay.tiltY, 0, 8, dt);
       }
       const a = ease(appear);
-      bay.mesh.scale.setScalar(Math.max(0.001, a));
-      bay.mesh.position.set(bay.base.x * a, bay.base.y * a, bay.base.z * a + bay.lift);
-      bay.mesh.rotation.set(bay.tiltX, bay.rotY + bay.tiltY, 0);
-      const dim = state.selected && bay.id !== state.selected ? 0.32 : 1;
-      const opacity = dim * Math.min(1, a * 1.15);
+      const focusScale = 1.16 - Math.min(0.44, ad * 0.17);
+      bay.mesh.scale.setScalar(Math.max(0.001, a * focusScale));
+      const z = -Math.min(6, ad) * 0.7;
+      const y = -Math.min(3, ad) * 0.07;
+      bay.mesh.position.set(bay.base.x * a, y * a, z + bay.lift);
+      const inward = THREE.MathUtils.clamp(-d * 0.16, -0.5, 0.5);
+      bay.mesh.rotation.set(bay.tiltX, inward * (1 - bay.lift * 0.8) + bay.tiltY, 0);
+      const dim = state.selected && bay.id !== state.selected ? 0.22 : 1;
+      const depth = 1 - Math.min(0.5, ad * 0.1);
+      const opacity = dim * depth * Math.min(1, a * 1.15);
       bay.mesh.material.opacity = opacity;
       bay.frame.material.opacity = opacity;
       bay.mesh.material.emissiveIntensity = bay.glow;
-      bay.mesh.renderOrder = hot ? 3 : 1;
+      bay.mesh.renderOrder = hot ? 30 : 20 - Math.round(ad);
     }
 
-    if (state.phase === "gallery" && state.hover) {
+    if (state.phase === "gallery" && state.hover && state.hover === state.lastFocusId) {
       const bay = bays.find((item) => item.id === state.hover);
       if (bay) {
         const rect = canvas.getBoundingClientRect();
@@ -602,16 +637,24 @@ export function createEngine(options: EngineOptions): EngineHandle {
     setSelected: (id) => {
       state.selected = id;
     },
+    moveFocus: (dir) => {
+      const next = Math.round(state.focusTarget) + (dir > 0 ? 1 : -1);
+      state.focusTarget = THREE.MathUtils.clamp(next, 0, bays.length - 1);
+    },
+    confirm: () => {
+      const index = Math.min(bays.length - 1, Math.max(0, Math.round(state.focusTarget)));
+      options.onSelect(bays[index]?.id ?? null);
+    },
     skip: () => {
       state.skip = true;
     },
     replay: () => {
       state.t = 0;
       state.skip = false;
-      state.panX = 0;
-      state.panY = 0;
-      state.velX = 0;
-      state.velY = 0;
+      state.focus = 0;
+      state.focusTarget = 0;
+      state.focusVel = 0;
+      state.lastFocusId = null;
       state.progress = -1;
       state.phase = "gallery";
       setPhase("intro");

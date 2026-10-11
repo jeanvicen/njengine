@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Gamepad2, Volume2, VolumeX, ImagePlus, Play, X } from "lucide-react";
+import { ImagePlus, Play, User, Volume2, VolumeX, Wifi, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
-
 import {
   createSlots,
   isFilled,
@@ -14,6 +13,19 @@ import {
   type GameSlot,
 } from "@/studio/slots";
 
+const BOOT_LINES = [
+  "Núcleo gráfico",
+  "Biblioteca",
+  "Ambiente de jogos",
+  "Renderização",
+  "NJENGINE",
+];
+
+function bootLine(progress: number): string {
+  const index = Math.min(BOOT_LINES.length - 1, Math.floor((progress / 100) * BOOT_LINES.length));
+  return BOOT_LINES[index];
+}
+
 export function StudioShell() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
@@ -21,13 +33,15 @@ export function StudioShell() {
   const [slots, setSlots] = useState<GameSlot[]>(createSlots);
   const [phase, setPhase] = useState<Phase>("intro");
   const [progress, setProgress] = useState(0);
-  const [openingComplete, setOpeningComplete] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [webgl, setWebgl] = useState(true);
   const [engineOn, setEngineOn] = useState(false);
-  const [activeSlot, setActiveSlot] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
+  const [clock, setClock] = useState("");
+  const [portrait, setPortrait] = useState(false);
+  const soundRef = useRef(soundOn);
+  soundRef.current = soundOn;
   const audioContextRef = useRef<AudioContext | null>(null);
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
@@ -51,8 +65,17 @@ export function StudioShell() {
         reduced,
         onPhase: (next) => setPhase(next),
         onProgress: (value) => setProgress(value),
-        onSelect: (id) => setSelectedId(id),
-        onHover: (id) => setHoverId(id),
+        onSelect: (id) => {
+          setSelectedId(id);
+          if (id) playUiSoundRef.current?.(140, 0.22, "sawtooth");
+        },
+        onHover: () => {},
+        onFocus: (id) => {
+          setFocusId((prev) => {
+            if (prev !== null && prev !== id) playUiSoundRef.current?.(640, 0.07, "sine");
+            return id;
+          });
+        },
         onFail: () => setWebgl(false),
       });
       if (dead) {
@@ -76,33 +99,54 @@ export function StudioShell() {
   }, [slots, engineOn]);
 
   useEffect(() => {
-    const finishOpening = window.setTimeout(() => {
-      engineRef.current?.skip();
-      setPhase("gallery");
-      setProgress(100);
-      setOpeningComplete(true);
-    }, 6500);
-    return () => window.clearTimeout(finishOpening);
-  }, []);
-
-  useEffect(() => {
     engineRef.current?.setSelected(selectedId);
   }, [selectedId, engineOn]);
 
+  // Relógio da barra superior
+  useEffect(() => {
+    const update = () => {
+      setClock(
+        new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      );
+    };
+    update();
+    const timer = window.setInterval(update, 10_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  // Detecta celular em pé para sugerir modo paisagem
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse) and (orientation: portrait)");
+    const update = () => setPortrait(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // Teclado estilo console: setas navegam, Enter abre, Esc volta
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const tag = (event.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (event.key === "Escape") {
         if (selectedId) setSelectedId(null);
+        return;
+      }
+      if (selectedId || phase !== "gallery") return;
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+        engineRef.current?.moveFocus(1);
+      } else if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+        engineRef.current?.moveFocus(-1);
+      } else if (event.key === "Enter") {
+        engineRef.current?.confirm();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId]);
+  }, [phase, selectedId]);
 
+  // Música cinematográfica do boot
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
   useEffect(() => {
     const audio = new Audio("/intro.mp3");
     audio.preload = "auto";
@@ -111,7 +155,7 @@ export function StudioShell() {
     audioRef.current = audio;
     let started = false;
     const kick = () => {
-      if (started) return;
+      if (started || !soundRef.current) return;
       started = true;
       void audio.play().catch(() => {});
     };
@@ -126,6 +170,11 @@ export function StudioShell() {
       window.removeEventListener("keydown", kick);
     };
   }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) audio.muted = !soundOn;
+  }, [soundOn]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -153,7 +202,7 @@ export function StudioShell() {
   }, []);
 
   const selected = slots.find((slot) => slot.id === selectedId) ?? null;
-  const hover = slots.find((slot) => slot.id === hoverId) ?? null;
+  const focused = slots.find((slot) => slot.id === focusId) ?? null;
   const filled = slots.filter(isFilled).length;
 
   function persist(next: GameSlot[]) {
@@ -161,8 +210,9 @@ export function StudioShell() {
     return writeSlots(next);
   }
 
-  function playUiSound(frequency = 520) {
-    if (!soundOn) return;
+  // Sintetizador leve de sons de UI (tick / confirmação)
+  function playUiSound(frequency: number, seconds: number, type: OscillatorType) {
+    if (!soundRef.current) return;
     try {
       const Context = window.AudioContext;
       if (!Context) return;
@@ -171,36 +221,25 @@ export function StudioShell() {
       if (context.state === "suspended") void context.resume();
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      oscillator.type = "sine";
+      oscillator.type = type;
       oscillator.frequency.setValueAtTime(frequency, context.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.72, context.currentTime + 0.075);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        Math.max(40, frequency * 0.6),
+        context.currentTime + seconds,
+      );
       gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.055, context.currentTime + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.095);
+      gain.gain.exponentialRampToValueAtTime(0.06, context.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + seconds);
       oscillator.connect(gain);
       gain.connect(context.destination);
       oscillator.start();
-      oscillator.stop(context.currentTime + 0.1);
+      oscillator.stop(context.currentTime + seconds + 0.02);
     } catch {
-      // Audio is an enhancement; keep the selector usable when unavailable.
+      // Som é um extra; o seletor continua funcionando sem ele.
     }
   }
-
-  function moveSelection(next: number) {
-    const wrapped = (next + 3) % 3;
-    setActiveSlot(wrapped);
-    playUiSound(460 + wrapped * 85);
-  }
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (!openingComplete && (phase !== "gallery" || progress < 100)) return;
-      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") moveSelection(activeSlot + 1);
-      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") moveSelection(activeSlot - 1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [activeSlot, openingComplete, phase, progress, soundOn]);
+  const playUiSoundRef = useRef(playUiSound);
+  playUiSoundRef.current = playUiSound;
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-void text-ink">
@@ -210,59 +249,79 @@ export function StudioShell() {
       <div className="veil pointer-events-none absolute inset-0 z-10 bg-void" />
       <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
-      {!openingComplete && phase !== "gallery" && (
-        <div className="opening-prompt absolute inset-x-0 bottom-12 z-20 flex flex-col items-center gap-3 px-5 text-center">
-          <p className="kicker text-ember">NJENGINE · INICIANDO</p>
-          <p className="opening-copy">Preparando sua biblioteca de jogos</p>
-          <button
-            type="button"
-            className="opening-skip"
-            onClick={() => {
-              engineRef.current?.skip();
-              setPhase("gallery");
-              setProgress(100);
-              setOpeningComplete(true);
-            }}
-          >
-            PULAR ABERTURA <ChevronRight aria-hidden="true" />
-          </button>
-        </div>
+      {phase === "gallery" && (
+        <div className="power-flash pointer-events-none absolute inset-0 z-30 bg-white" />
       )}
 
-      {(openingComplete || (phase === "gallery" && progress >= 100)) && (
-        <section className="selector-screen absolute inset-0 z-20 flex flex-col" aria-label="Seletor de jogos NJengine">
-          <header className="selector-header flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="brand-mark"><Gamepad2 aria-hidden="true" /></div>
-              <div><p className="selector-brand">NJENGINE</p><p className="selector-subtitle">SUA PRÓXIMA JOGADA</p></div>
-            </div>
-            <button className="sound-toggle" type="button" onClick={() => setSoundOn((value) => !value)} aria-label={soundOn ? "Desativar sons" : "Ativar sons"}>
-              {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
-              <span>{soundOn ? "SOM LIGADO" : "SOM DESLIGADO"}</span>
-            </button>
-          </header>
-
-          <div className="selector-content">
-            <div className="selector-heading"><p className="kicker">BIBLIOTECA</p><h1>Escolha seu jogo</h1><p className="selector-hint">Um novo universo começa aqui.</p></div>
-            <div className="game-rail" role="tablist" aria-label="Espaços de jogo">
-              {[0, 1, 2].map((index) => (
-                <button key={index} type="button" role="tab" aria-selected={activeSlot === index} className={`empty-game-card ${activeSlot === index ? "is-active" : ""}`} onClick={() => moveSelection(index)}>
-                  <span className="card-number">0{index + 1}</span>
-                  <span className="empty-card-symbol"><Gamepad2 aria-hidden="true" /></span>
-                  <span className="card-label">ESPAÇO VAZIO</span>
-                  <span className="card-status">JOGOS EM BREVE</span>
-                </button>
-              ))}
-            </div>
-            <div className="rail-controls">
-              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot - 1)} aria-label="Espaço anterior"><ChevronLeft /></button>
-              <div className="rail-dots" aria-label={`Espaço ${activeSlot + 1} de 3`}>{[0, 1, 2].map((index) => <span key={index} className={activeSlot === index ? "active" : ""} />)}</div>
-              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot + 1)} aria-label="Próximo espaço"><ChevronRight /></button>
-            </div>
-            <p className="coming-soon">A biblioteca está sendo preparada<span> — em breve, novas aventuras.</span></p>
+      <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
+        <header className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <p className="font-display text-xl tracking-wide text-ink">
+              NJ<span className="text-ember">ENGINE</span>
+            </p>
+            <p className="kicker mt-1 hidden text-mute sm:block">Console Web</p>
           </div>
-          <footer className="selector-footer"><span>© NJENGINE</span><span>← → NAVEGAR <i /> A / D</span></footer>
-        </section>
+          <div className="flex items-center gap-4 text-mute">
+            {phase === "gallery" && (
+              <p className="kicker hidden tabular-nums sm:block">
+                {filled} {filled === 1 ? "jogo" : "jogos"}
+              </p>
+            )}
+            <span className="flex items-center gap-1.5">
+              <Wifi className="size-3.5 text-ember" />
+              <span className="kicker hidden sm:inline">Online</span>
+            </span>
+            <span className="kicker tabular-nums text-ink">{clock}</span>
+            <button
+              type="button"
+              className="ghost-btn pointer-events-auto min-h-9 px-2.5"
+              onClick={() => setSoundOn((value) => !value)}
+              aria-label={soundOn ? "Silenciar" : "Ativar som"}
+            >
+              {soundOn ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+            </button>
+            <User className="size-4" />
+          </div>
+        </header>
+
+        {phase === "intro" ? (
+          <div>
+            <p className="font-display text-5xl tabular-nums text-ink">
+              {String(progress).padStart(2, "0")}
+            </p>
+            <p className="kicker mt-2 text-mute">
+              {bootLine(progress)}
+              <span className="boot-caret text-ember">▮</span>
+            </p>
+            <div className="mt-4 h-px w-48 bg-line">
+              <div
+                className="h-px w-full origin-left bg-ember"
+                style={{ transform: `scaleX(${progress / 100})` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <FocusPanel slot={focused} empty={filled === 0} />
+            <div className="console-hints flex items-center justify-between gap-4 border-t border-line pt-3">
+              <p className="kicker text-mute">
+                <span className="hidden sm:inline">← → Navegar · Enter Abrir · Esc Voltar</span>
+                <span className="sm:hidden">Deslize · Toque para abrir</span>
+              </p>
+              <p className="kicker text-ember">NJENGINE OS</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {portrait && phase === "gallery" && !selected && (
+        <div className="rotate-hint absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-void/85 px-8 text-center">
+          <p className="font-display text-2xl text-ink">
+            NJ<span className="text-ember">ENGINE</span>
+          </p>
+          <p className="kicker text-mute">Vire o aparelho para a experiência completa</p>
+          <div className="rotate-phone" aria-hidden="true" />
+        </div>
       )}
 
       {!webgl && (
@@ -309,6 +368,31 @@ export function StudioShell() {
   );
 }
 
+function FocusPanel({ slot, empty }: { slot: GameSlot | null; empty: boolean }) {
+  if (!slot) return <div className="min-h-24" />;
+  const title = slotTitle(slot);
+  const meta = [slot.genre, slot.platform, slot.year].filter((v) => v.trim()).join(" · ");
+  return (
+    <div className="max-w-md">
+      {empty && (
+        <p className="kicker mb-3 text-ember">
+          Sua biblioteca está pronta — os primeiros jogos chegam em breve
+        </p>
+      )}
+      <p className="kicker text-mute">Baia {slot.bay}</p>
+      <p className="font-display mt-1 text-3xl text-balance text-ink sm:text-4xl">{title}</p>
+      {meta && <p className="kicker mt-2 text-mute">{meta}</p>}
+      {slot.description.trim() && (
+        <p className="mt-2 line-clamp-2 max-w-sm text-sm leading-relaxed text-mute">
+          {slot.description}
+        </p>
+      )}
+      <p className="kicker mt-3 text-mute">
+        <span className="text-ink">Enter</span> {isFilled(slot) ? "Abrir" : "Ver baia"}
+      </p>
+    </div>
+  );
+}
 function Dossier({
   slot,
   onClose,

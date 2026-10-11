@@ -1,7 +1,7 @@
 const INK = "#ece8de";
 const EMBER = "#d4af37";
-const VOID = "#07080b";
-const FACE = "#14161c";
+const VOID = "#0a0a0f";
+const FACE = "#1a1a24";
 
 export type CoverInput = {
   bay: string;
@@ -173,6 +173,77 @@ function motif(ctx: CanvasRenderingContext2D, w: number, h: number, index: numbe
   grain(ctx, w, h, rand);
 }
 
+
+function lockEmblem(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.save();
+  ctx.translate(w / 2, h * 0.4);
+  const u = w * 0.01; // unidade base
+  ctx.lineWidth = Math.max(3, u * 1.1);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = EMBER;
+  ctx.fillStyle = EMBER;
+  ctx.shadowColor = "rgba(212,175,55,0.55)";
+  ctx.shadowBlur = u * 3;
+
+  // caveira
+  const r = u * 16;
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.25, r, Math.PI * 0.95, Math.PI * 2.05);
+  ctx.quadraticCurveTo(r * 0.95, r * 0.75, r * 0.45, r * 0.9);
+  ctx.lineTo(-r * 0.45, r * 0.9);
+  ctx.quadraticCurveTo(-r * 0.95, r * 0.75, -r, -r * 0.25);
+  ctx.stroke();
+  // olhos
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.42, -r * 0.15, r * 0.24, r * 0.3, 0, 0, Math.PI * 2);
+  ctx.ellipse(r * 0.42, -r * 0.15, r * 0.24, r * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // nariz
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.12);
+  ctx.lineTo(r * 0.12, r * 0.42);
+  ctx.lineTo(-r * 0.12, r * 0.42);
+  ctx.closePath();
+  ctx.fill();
+  // dentes
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = Math.max(2, u * 0.7);
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * r * 0.18, r * 0.62);
+    ctx.lineTo(i * r * 0.18, r * 0.9);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.45, r * 0.62);
+  ctx.lineTo(r * 0.45, r * 0.62);
+  ctx.stroke();
+
+  // chave cruzada abaixo da caveira
+  ctx.shadowBlur = u * 2.4;
+  ctx.lineWidth = Math.max(3, u * 1.15);
+  const ky = r * 1.55;
+  const kl = u * 22;
+  ctx.beginPath();
+  ctx.moveTo(-kl, ky + u * 6);
+  ctx.lineTo(kl * 0.55, ky - u * 4);
+  ctx.stroke();
+  // argola da chave
+  ctx.beginPath();
+  ctx.arc(kl * 0.78, ky - u * 5.2, u * 5.4, 0, Math.PI * 2);
+  ctx.stroke();
+  // dentes da chave
+  ctx.beginPath();
+  ctx.moveTo(-kl * 0.55, ky + u * 3.4);
+  ctx.lineTo(-kl * 0.55, ky + u * 7.6);
+  ctx.moveTo(-kl * 0.28, ky + u * 2.4);
+  ctx.lineTo(-kl * 0.28, ky + u * 6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function labelBlock(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -201,16 +272,25 @@ function labelBlock(
   } while (ctx.measureText(title).width > w * 0.78 && size > 18);
   ctx.fillText(title, w / 2, h * 0.785);
 
-  const pw = w * 0.36;
+  const locked = !input.filled;
+  const pw = w * (locked ? 0.52 : 0.36);
   const ph = h * 0.058;
   const x = (w - pw) / 2;
   const y = h * 0.845;
-  ctx.fillStyle = EMBER;
-  roundRect(ctx, x, y, pw, ph, ph / 2);
-  ctx.fill();
-  ctx.fillStyle = VOID;
-  ctx.font = `700 ${Math.round(ph * 0.42)}px Unbounded, sans-serif`;
-  ctx.fillText("PLAY", w / 2, y + ph / 2 + 1);
+  if (locked) {
+    ctx.strokeStyle = EMBER;
+    ctx.lineWidth = Math.max(2, w * 0.004);
+    roundRect(ctx, x, y, pw, ph, ph / 2);
+    ctx.stroke();
+    ctx.fillStyle = EMBER;
+  } else {
+    ctx.fillStyle = EMBER;
+    roundRect(ctx, x, y, pw, ph, ph / 2);
+    ctx.fill();
+    ctx.fillStyle = VOID;
+  }
+  ctx.font = `700 ${Math.round(ph * 0.38)}px Unbounded, sans-serif`;
+  ctx.fillText(locked ? "BLOQUEADO" : "PLAY", w / 2, y + ph / 2 + 1);
 
   if (input.filled) {
     ctx.fillStyle = EMBER;
@@ -253,12 +333,16 @@ export function paintCoverCanvas(
     ctx.fillRect(0, 0, w, h);
   } else {
     const wash = ctx.createLinearGradient(0, 0, 0, h);
-    wash.addColorStop(0, "#1b1d24");
+    wash.addColorStop(0, "#12121a");
     wash.addColorStop(1, FACE);
     ctx.fillStyle = wash;
     ctx.fillRect(0, 0, w, h);
-    const index = Number.parseInt(input.bay, 10) || 1;
-    motif(ctx, w, h, index);
+    if (input.filled) {
+      const index = Number.parseInt(input.bay, 10) || 1;
+      motif(ctx, w, h, index);
+    } else {
+      lockEmblem(ctx, w, h);
+    }
   }
 
   labelBlock(ctx, w, h, input);
