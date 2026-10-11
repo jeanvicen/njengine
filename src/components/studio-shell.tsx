@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Play, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
-import { ConsoleDashboard } from "@/components/console-dashboard";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
+
+const PlaystationExperience = lazy(() => import("./playstation-experience"));
 import {
   createSlots,
   isFilled,
@@ -22,6 +23,7 @@ export function StudioShell() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [progress, setProgress] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
   const [webgl, setWebgl] = useState(true);
   const [engineOn, setEngineOn] = useState(false);
   const slotsRef = useRef(slots);
@@ -47,7 +49,7 @@ export function StudioShell() {
         onPhase: (next) => setPhase(next),
         onProgress: (value) => setProgress(value),
         onSelect: (id) => setSelectedId(id),
-        onHover: () => {},
+        onHover: (id) => setHoverId(id),
         onFail: () => setWebgl(false),
       });
       if (dead) {
@@ -138,6 +140,8 @@ export function StudioShell() {
   }, []);
 
   const selected = slots.find((slot) => slot.id === selectedId) ?? null;
+  const hover = slots.find((slot) => slot.id === hoverId) ?? null;
+  const filled = slots.filter(isFilled).length;
 
   function persist(next: GameSlot[]) {
     setSlots(next);
@@ -146,6 +150,17 @@ export function StudioShell() {
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-void text-ink">
+      {phase === "gallery" && progress >= 100 && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[60] grid place-items-center bg-[#0a0e1a] text-white">
+              <p className="kicker">Abrindo NJengines…</p>
+            </div>
+          }
+        >
+          <PlaystationExperience />
+        </Suspense>
+      )}
       <canvas ref={canvasRef} className="stage-canvas absolute inset-0 h-full w-full" />
       <div className="vignette pointer-events-none absolute inset-0" />
       <div className="grain pointer-events-none absolute inset-0" />
@@ -153,7 +168,27 @@ export function StudioShell() {
       <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
       {phase === "gallery" && progress >= 100 && (
-        <ConsoleDashboard slots={slots} onOpenSlot={setSelectedId} />
+        <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
+          <header className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-display text-xl text-ink">NJengines</p>
+              <p className="kicker mt-1 text-mute">Estúdio</p>
+            </div>
+            <p className="kicker text-right text-mute">
+              12 baias
+              <span className="mt-1 block tabular-nums text-ink">
+                {filled} {filled === 1 ? "jogo" : "jogos"}
+              </span>
+            </p>
+          </header>
+
+          <div className="flex items-end justify-between gap-4">
+            <p className="kicker max-w-xs text-mute">
+              {hover ? slotTitle(hover) : "Arraste o muro. Clique numa baia."}
+            </p>
+            <p className="kicker text-right text-ember">Em breve, os jogos</p>
+          </div>
+        </div>
       )}
 
       {!webgl && (
