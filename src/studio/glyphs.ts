@@ -7,7 +7,7 @@ const GLYPHS: Record<string, string[]> = {
   S: [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
 };
 
-export const WORD = "NJENGINES";
+export const WORD = "NJENGINE";
 
 export type LogoPoint = { x: number; y: number };
 

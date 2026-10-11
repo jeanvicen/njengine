@@ -1,5 +1,5 @@
 const INK = "#ece8de";
-const EMBER = "#d4af37";
+const EMBER = "#ed7135";
 const VOID = "#07080b";
 const FACE = "#14161c";
 
@@ -54,7 +54,7 @@ function frame(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.strokeStyle = "rgba(236,232,222,0.45)";
   ctx.lineWidth = Math.max(2, w * 0.008);
   ctx.strokeRect(w * 0.045, h * 0.036, w * 0.91, h * 0.928);
-  ctx.strokeStyle = "rgba(212,175,55,0.85)";
+  ctx.strokeStyle = "rgba(237,113,53,0.85)";
   ctx.lineWidth = Math.max(3, w * 0.012);
   ctx.beginPath();
   ctx.moveTo(w * 0.045, h * 0.036);
@@ -210,7 +210,7 @@ function labelBlock(
   ctx.fill();
   ctx.fillStyle = VOID;
   ctx.font = `700 ${Math.round(ph * 0.42)}px Unbounded, sans-serif`;
-  ctx.fillText("PLAY", w / 2, y + ph / 2 + 1);
+  ctx.fillText("LOCAL", w / 2, y + ph / 2 + 1);
 
   if (input.filled) {
     ctx.fillStyle = EMBER;
@@ -296,7 +296,7 @@ export function paintSwarmCanvas(variant: number): HTMLCanvasElement {
   ctx.fill();
   ctx.fillStyle = VOID;
   ctx.font = `700 ${Math.round(w * 0.035)}px Unbounded, sans-serif`;
-  ctx.fillText("PLAY", w / 2, h * 0.888);
+  ctx.fillText("LOCAL", w / 2, h * 0.888);
   return canvas;
 }
 

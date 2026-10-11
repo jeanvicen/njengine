@@ -130,10 +130,10 @@ export function createEngine(options: EngineOptions): EngineHandle {
   const key = new THREE.DirectionalLight(0xfff6ee, 2.4);
   key.position.set(-6, 9, 12);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xd4af37, 1.1);
+  const rim = new THREE.DirectionalLight(0xed7135, 1.1);
   rim.position.set(7, 2, -6);
   scene.add(rim);
-  const core = new THREE.PointLight(0xd4af37, 0, 48);
+  const core = new THREE.PointLight(0xed7135, 0, 48);
   core.position.set(0, 0.2, 3.2);
   scene.add(core);
 
@@ -198,7 +198,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
     mesh.frustumCulled = false;
     const color = new THREE.Color();
     mine.forEach((tile, index) => {
-      color.set("#ffffff").lerp(new THREE.Color("#f0d9a0"), (index % 5) * 0.06);
+      color.set("#ffffff").lerp(new THREE.Color("#ffbf91"), (index % 5) * 0.06);
       mesh.setColorAt(index, color);
     });
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -227,7 +227,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
       roughness: 0.24,
       metalness: 0.68,
       color: 0xffffff,
-      emissive: new THREE.Color("#d4af37"),
+      emissive: new THREE.Color("#ed7135"),
       emissiveIntensity: 0.05,
       transparent: true,
       opacity: 0,
@@ -235,7 +235,7 @@ export function createEngine(options: EngineOptions): EngineHandle {
     const mesh = new THREE.Mesh(cardGeo, mat);
     mesh.userData.id = slot.id;
     const frameMat = new THREE.MeshStandardMaterial({
-      color: 0x4a3a14,
+      color: 0x4c2412,
       roughness: 0.2,
       metalness: 0.92,
       transparent: true,
