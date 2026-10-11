@@ -375,7 +375,7 @@ function FocusPanel({ slot, empty }: { slot: GameSlot | null; empty: boolean }) 
     </div>
   );
 }
-function Dossier({
+export function Dossier({
   slot,
   onClose,
   onSave,

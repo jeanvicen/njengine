@@ -8,10 +8,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "NJengines" },
+      { title: "NJengine" },
       {
         name: "description",
-        content: "NJengines — muro de jogos em 3D. Abra uma baia, coloque a capa e o Play.",
+        content: "NJengine — biblioteca pessoal de jogos com catálogo em grade e modo imersivo.",
       },
       { name: "theme-color", content: "#07080b" },
     ],

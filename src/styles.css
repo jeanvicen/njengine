@@ -310,6 +310,324 @@
 .opening-skip:hover { border-color: var(--color-ember); color: var(--color-ember); }
 .opening-skip svg { width: 1rem; }
 
+/* NJengine desktop library and immersive launcher */
+.launcher-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 86% 0%, rgba(212, 175, 55, 0.065), transparent 34%),
+    var(--color-void);
+  color: var(--color-ink);
+}
+
+.launcher-layout {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: 15.25rem minmax(0, 1fr);
+}
+
+.launcher-sidebar {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--color-line);
+  background: rgba(14, 14, 19, 0.92);
+  padding: 1.65rem 1rem 1.15rem;
+}
+
+.launcher-brand {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0 0.45rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.launcher-brand-icon,
+.immersive-mark {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(212, 175, 55, 0.34);
+  border-radius: 0.85rem;
+  color: var(--color-ember);
+  background: rgba(212, 175, 55, 0.075);
+}
+
+.launcher-brand-icon svg,
+.immersive-mark svg,
+.launcher-brand-icon img,
+.immersive-mark img { width: 1.35rem; height: 1.35rem; object-fit: contain; stroke-width: 1.65; }
+.launcher-brand-word { font-family: var(--font-display); font-size: 1.06rem; font-weight: 500; letter-spacing: -0.055em; }
+.launcher-brand-word span,
+.immersive-brand-name span { color: var(--color-ember); }
+
+.launcher-nav { display: flex; flex-direction: column; gap: 0.28rem; margin-top: 2.6rem; }
+.launcher-nav-label { margin: 0 0 0.55rem 0.72rem; color: var(--color-mute); font-size: 0.61rem; font-weight: 600; letter-spacing: 0.16em; }
+.launcher-genre-label { margin-top: 1.75rem; }
+.launcher-nav-item {
+  display: flex;
+  min-height: 2.8rem;
+  align-items: center;
+  gap: 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 0.78rem;
+  padding: 0 0.75rem;
+  color: var(--color-mute);
+  background: transparent;
+  text-align: left;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.launcher-nav-item > svg { width: 1rem; height: 1rem; flex: none; }
+.launcher-nav-item > span:nth-child(2) { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; }
+.launcher-nav-item:hover { color: var(--color-ink); background: rgba(255, 255, 255, 0.035); }
+.launcher-nav-item.is-active { border-color: rgba(212, 175, 55, 0.13); color: var(--color-ink); background: rgba(212, 175, 55, 0.09); }
+.launcher-nav-item.is-active > svg { color: var(--color-ember); }
+.launcher-nav-count { color: var(--color-mute); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+.genre-dot { width: 0.43rem; height: 0.43rem; flex: none; border-radius: 50%; background: rgba(212, 175, 55, 0.55); }
+.launcher-sidebar-spacer { flex: 1; }
+.launcher-local-note { display: flex; align-items: center; gap: 0.72rem; border: 1px solid rgba(255, 255, 255, 0.055); border-radius: 0.85rem; padding: 0.82rem 0.75rem; background: rgba(255, 255, 255, 0.025); }
+.launcher-local-note > svg { width: 1rem; height: 1rem; flex: none; color: var(--color-ember); }
+.launcher-local-note div { display: flex; min-width: 0; flex-direction: column; gap: 0.15rem; }
+.launcher-local-note strong { font-size: 0.72rem; font-weight: 600; }
+.launcher-local-note span { color: var(--color-mute); font-size: 0.64rem; }
+.launcher-sidebar-foot { padding: 1rem 0.35rem 0; color: rgba(141, 135, 124, 0.58); font-size: 0.54rem; letter-spacing: 0.14em; }
+
+.launcher-main { min-width: 0; overflow: auto; padding: 1.35rem clamp(1.2rem, 4.15vw, 4.4rem) 1.6rem; scrollbar-color: rgba(212, 175, 55, 0.24) transparent; }
+.launcher-topbar { display: flex; min-height: 3.35rem; align-items: center; justify-content: space-between; gap: 1rem; }
+.launcher-time { display: flex; align-items: center; gap: 0.55rem; color: var(--color-mute); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+.local-status-dot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: var(--color-ember); box-shadow: 0 0 0.65rem rgba(212, 175, 55, 0.3); }
+.topbar-divider { width: 1px; height: 0.85rem; margin-inline: 0.18rem; background: var(--color-line); }
+.launcher-top-actions { display: flex; align-items: center; gap: 0.6rem; }
+.launcher-action { display: inline-flex; min-height: 2.85rem; align-items: center; justify-content: center; gap: 0.55rem; border: 1px solid transparent; border-radius: 0.82rem; padding: 0 1rem; font-size: 0.78rem; font-weight: 600; transition: transform 160ms ease, background 160ms ease, border-color 160ms ease; }
+.launcher-action svg { width: 1rem; height: 1rem; flex: none; }
+.launcher-action:active:not(:disabled) { transform: translateY(1px); }
+.launcher-action:disabled { cursor: not-allowed; opacity: 0.48; }
+.launcher-action-primary { border-color: rgba(212, 175, 55, 0.5); color: #111; background: var(--color-ember); }
+.launcher-action-primary:hover:not(:disabled) { background: #e0c25d; }
+.launcher-action-secondary { border-color: var(--color-line); color: var(--color-ink); background: rgba(255, 255, 255, 0.025); }
+.launcher-action-secondary:hover:not(:disabled) { border-color: rgba(212, 175, 55, 0.42); background: rgba(212, 175, 55, 0.07); }
+.launcher-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; margin-top: clamp(2.6rem, 7vh, 4.6rem); }
+.launcher-eyebrow { margin: 0 0 0.65rem; color: var(--color-ember); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; }
+.launcher-heading-row h1 { margin: 0; font-family: var(--font-display); font-size: clamp(2rem, 3.6vw, 3.25rem); font-weight: 500; letter-spacing: -0.065em; line-height: 1.08; }
+.launcher-subheading { margin: 0.68rem 0 0; color: var(--color-mute); font-size: 0.85rem; }
+.launcher-heading-mark { display: flex; align-items: center; gap: 0.8rem; padding: 0 0 0.25rem; color: rgba(236, 232, 222, 0.4); }
+.launcher-heading-mark svg { width: 2.35rem; height: 2.35rem; color: rgba(212, 175, 55, 0.65); stroke-width: 1.2; }
+.launcher-heading-mark span { font-size: 0.54rem; letter-spacing: 0.14em; line-height: 1.7; }
+.launcher-toolbar { display: flex; align-items: center; gap: 0.7rem; margin-top: 2.15rem; }
+.launcher-search,
+.launcher-sort { display: flex; min-height: 2.9rem; align-items: center; border: 1px solid var(--color-line); border-radius: 0.78rem; color: var(--color-mute); background: rgba(255, 255, 255, 0.025); }
+.launcher-search { width: min(100%, 25rem); gap: 0.65rem; padding: 0 0.85rem; }
+.launcher-search > svg { width: 1rem; height: 1rem; flex: none; }
+.launcher-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--color-ink); background: transparent; font: inherit; font-size: 0.82rem; }
+.launcher-search input::placeholder { color: var(--color-mute); }
+.launcher-search:focus-within { border-color: rgba(212, 175, 55, 0.62); }
+.launcher-search button { display: grid; width: 1.8rem; height: 1.8rem; flex: none; place-items: center; border: 0; border-radius: 0.45rem; color: var(--color-mute); background: transparent; }
+.launcher-search button svg { width: 0.9rem; height: 0.9rem; }
+.launcher-sort { position: relative; gap: 0.48rem; padding: 0 0.75rem; }
+.launcher-sort > svg:first-child { width: 0.95rem; height: 0.95rem; flex: none; }
+.launcher-sort > svg:last-child { width: 0.85rem; height: 0.85rem; flex: none; }
+.launcher-sort select { max-width: 10.5rem; appearance: none; border: 0; outline: 0; color: var(--color-ink); background: transparent; font: inherit; font-size: 0.75rem; cursor: pointer; }
+.launcher-sort option { color: var(--color-ink); background: var(--color-panel); }
+.launcher-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 2.1rem 0 1rem; }
+.launcher-section-heading h2 { margin: 0; font-family: var(--font-display); font-size: 0.95rem; font-weight: 500; letter-spacing: -0.025em; }
+.launcher-section-heading span { color: var(--color-mute); font-size: 0.67rem; }
+.launcher-game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.6rem, 1fr)); align-items: start; gap: 1.1rem 0.9rem; }
+.launcher-game-card { min-width: 0; }
+.launcher-cover-button { position: relative; display: block; width: 100%; aspect-ratio: 0.76; overflow: hidden; border: 1px solid rgba(236, 232, 222, 0.1); border-radius: 0.85rem; padding: 0; color: var(--color-ink); background: var(--color-face); text-align: left; }
+.launcher-cover-button img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 260ms ease, filter 220ms ease; }
+.launcher-cover-button:hover img { transform: scale(1.035); filter: brightness(0.78); }
+.launcher-cover-open { position: absolute; inset: auto 0.6rem 0.65rem; display: flex; min-height: 2.3rem; align-items: center; justify-content: center; gap: 0.42rem; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 0.62rem; color: var(--color-ink); background: rgba(10, 10, 15, 0.82); font-size: 0.7rem; font-weight: 600; opacity: 0; transform: translateY(0.28rem); transition: opacity 180ms ease, transform 180ms ease; backdrop-filter: blur(12px); }
+.launcher-cover-open svg { width: 0.82rem; height: 0.82rem; }
+.launcher-cover-button:hover .launcher-cover-open,
+.launcher-cover-button:focus-visible .launcher-cover-open { opacity: 1; transform: none; }
+.launcher-bay-tag { position: absolute; top: 0.58rem; left: 0.58rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 99px; padding: 0.25rem 0.48rem; color: rgba(255, 255, 255, 0.82); background: rgba(10, 10, 15, 0.63); font-size: 0.5rem; letter-spacing: 0.1em; backdrop-filter: blur(8px); }
+.launcher-game-info { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.7rem; }
+.launcher-game-title { min-width: 0; flex: 1; overflow: hidden; border: 0; padding: 0; color: var(--color-ink); background: transparent; font-size: 0.81rem; font-weight: 600; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.launcher-game-title:hover { color: var(--color-ember); }
+.launcher-edit-btn { display: grid; width: 2rem; height: 2rem; flex: none; place-items: center; border: 1px solid transparent; border-radius: 0.55rem; color: var(--color-mute); background: transparent; }
+.launcher-edit-btn:hover { border-color: var(--color-line); color: var(--color-ember); background: rgba(255, 255, 255, 0.035); }
+.launcher-edit-btn svg { width: 0.85rem; height: 0.85rem; }
+.launcher-game-meta { overflow: hidden; margin: 0.08rem 0 0; color: var(--color-mute); font-size: 0.66rem; text-overflow: ellipsis; white-space: nowrap; }
+.launcher-add-card { display: flex; min-height: 12rem; aspect-ratio: 0.76; flex-direction: column; align-items: center; justify-content: center; gap: 0.58rem; border: 1px dashed rgba(236, 232, 222, 0.18); border-radius: 0.85rem; padding: 1rem; color: var(--color-mute); background: rgba(255, 255, 255, 0.018); text-align: center; transition: border-color 180ms ease, background 180ms ease, color 180ms ease; }
+.launcher-add-card:hover { border-color: rgba(212, 175, 55, 0.5); color: var(--color-ink); background: rgba(212, 175, 55, 0.045); }
+.launcher-add-icon { display: grid; width: 2.7rem; height: 2.7rem; place-items: center; border: 1px solid rgba(212, 175, 55, 0.22); border-radius: 50%; color: var(--color-ember); }
+.launcher-add-icon svg { width: 1.2rem; height: 1.2rem; }
+.launcher-add-card strong { color: var(--color-ink); font-size: 0.76rem; font-weight: 600; }
+.launcher-add-card > span:last-child { font-size: 0.63rem; }
+.launcher-mobile-filters { display: none; }
+.launcher-empty { display: flex; min-height: min(27rem, 55vh); flex-direction: column; align-items: center; justify-content: center; margin-top: 1.6rem; border: 1px solid rgba(236, 232, 222, 0.075); border-radius: 1.25rem; padding: 2.2rem 1.5rem; background: radial-gradient(ellipse at 50% 36%, rgba(212, 175, 55, 0.055), transparent 45%), rgba(255, 255, 255, 0.018); text-align: center; }
+.launcher-empty-art { position: relative; display: grid; width: 7.4rem; height: 7.4rem; place-items: center; margin-bottom: 1.4rem; }
+.launcher-empty-art > svg { z-index: 1; width: 2.65rem; height: 2.65rem; color: var(--color-ember); stroke-width: 1.25; }
+.empty-art-orbit { position: absolute; inset: 0.5rem; border: 1px solid rgba(212, 175, 55, 0.13); border-radius: 2rem; transform: rotate(45deg); }
+.empty-art-orbit-two { inset: 1.05rem; border-color: rgba(236, 232, 222, 0.09); border-radius: 1.5rem; transform: rotate(0deg); }
+.launcher-empty h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 500; letter-spacing: -0.05em; }
+.launcher-empty > p:not(.launcher-eyebrow) { max-width: 28rem; margin: 0.75rem 0 1.35rem; color: var(--color-mute); font-size: 0.82rem; line-height: 1.7; }
+.launcher-empty-action { min-height: 2.9rem; }
+.launcher-empty-foot { margin-top: 1rem; color: rgba(141, 135, 124, 0.72); font-size: 0.63rem; }
+.launcher-loading { display: flex; min-height: 14rem; align-items: center; justify-content: center; gap: 0.65rem; color: var(--color-mute); font-size: 0.82rem; }
+.launcher-no-results { display: flex; min-height: 16rem; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.launcher-no-results > svg { width: 1.7rem; height: 1.7rem; color: var(--color-mute); }
+.launcher-no-results h2 { margin: 0.8rem 0 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 500; }
+.launcher-no-results p { margin: 0.45rem 0 0.9rem; color: var(--color-mute); font-size: 0.8rem; }
+.launcher-text-action { min-height: 2.75rem; border: 0; padding: 0 0.6rem; color: var(--color-ember); background: transparent; font-size: 0.78rem; }
+.launcher-main-foot { display: flex; justify-content: space-between; gap: 1rem; margin-top: 2.5rem; border-top: 1px solid rgba(236, 232, 222, 0.07); padding: 1rem 0 0.3rem; color: rgba(141, 135, 124, 0.75); font-size: 0.62rem; }
+
+.immersive-page { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, #17150f 0%, var(--color-void) 58%); color: var(--color-ink); }
+.immersive-vignette { z-index: 1; background: radial-gradient(ellipse at center, transparent 36%, rgba(7, 8, 11, 0.76) 100%); }
+.immersive-grain { z-index: 1; opacity: 0.13; mix-blend-mode: overlay; background-image: radial-gradient(rgba(212, 175, 55, 0.36) 0.55px, transparent 0.7px); background-size: 3px 3px; }
+.immersive-toolbar { position: absolute; z-index: 5; top: 0; right: 0; left: 0; display: flex; min-height: 5rem; align-items: center; justify-content: space-between; gap: 1rem; padding: max(0.85rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) 0.7rem max(1.25rem, env(safe-area-inset-left)); }
+.immersive-brand-lockup,
+.immersive-toolbar-actions { display: flex; align-items: center; gap: 0.7rem; }
+.immersive-mark { width: 2.35rem; height: 2.35rem; border-radius: 0.72rem; background: rgba(10, 10, 15, 0.65); }
+.immersive-brand-name { font-family: var(--font-display); font-size: 1rem; letter-spacing: -0.06em; }
+.immersive-mode-label { margin-left: 0.3rem; border-left: 1px solid var(--color-line); padding-left: 0.85rem; color: var(--color-mute); font-size: 0.56rem; letter-spacing: 0.15em; }
+.immersive-toolbar-actions { gap: 0.55rem; }
+.immersive-count { margin-right: 0.35rem; color: var(--color-mute); font-size: 0.68rem; }
+.immersive-icon-btn,
+.immersive-toolbar-btn,
+.immersive-nav-btn { display: inline-flex; min-width: 2.8rem; min-height: 2.8rem; align-items: center; justify-content: center; gap: 0.45rem; border: 1px solid rgba(236, 232, 222, 0.16); border-radius: 0.75rem; color: var(--color-ink); background: rgba(10, 10, 15, 0.5); transition: border-color 180ms ease, background 180ms ease, color 180ms ease; backdrop-filter: blur(12px); }
+.immersive-icon-btn:hover,
+.immersive-toolbar-btn:hover,
+.immersive-nav-btn:hover { border-color: rgba(212, 175, 55, 0.52); color: var(--color-ember); background: rgba(212, 175, 55, 0.08); }
+.immersive-icon-btn svg,
+.immersive-toolbar-btn svg,
+.immersive-nav-btn svg { width: 1rem; height: 1rem; }
+.immersive-toolbar-btn { padding: 0 0.85rem; font-size: 0.7rem; }
+.immersive-focus { position: absolute; z-index: 3; right: max(2rem, 8vw); bottom: max(7rem, 14vh); left: max(2rem, 9vw); max-width: 36rem; animation: immersive-rise 420ms ease both; }
+.immersive-eyebrow { margin: 0 0 0.7rem; color: var(--color-ember); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.17em; }
+.immersive-eyebrow span { margin-inline: 0.35rem; color: var(--color-mute); }
+.immersive-focus h1 { max-width: 12ch; margin: 0; font-family: var(--font-display); font-size: clamp(2.2rem, 5.7vw, 5.3rem); font-weight: 500; letter-spacing: -0.07em; line-height: 1.02; text-wrap: balance; text-shadow: 0 0.15rem 2rem rgba(0, 0, 0, 0.62); }
+.immersive-meta { margin: 0.9rem 0 0; color: var(--color-mute); font-size: 0.78rem; }
+.immersive-description { max-width: 29rem; margin: 0.65rem 0 0; color: rgba(236, 232, 222, 0.78); font-size: 0.83rem; line-height: 1.65; }
+.immersive-game-actions { display: flex; align-items: center; gap: 0.65rem; margin-top: 1.25rem; }
+.immersive-primary-btn,
+.immersive-secondary-btn { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.55rem; border: 1px solid rgba(212, 175, 55, 0.6); border-radius: 0.8rem; padding: 0 1rem; color: #111; background: var(--color-ember); font-size: 0.76rem; font-weight: 600; text-decoration: none; transition: filter 160ms ease, transform 160ms ease; }
+.immersive-primary-btn:hover,
+.immersive-secondary-btn:hover { filter: brightness(1.09); }
+.immersive-primary-btn:active,
+.immersive-secondary-btn:active { transform: translateY(1px); }
+.immersive-primary-btn svg,
+.immersive-secondary-btn svg { width: 1rem; height: 1rem; }
+.immersive-secondary-btn { border-color: rgba(236, 232, 222, 0.21); color: var(--color-ink); background: rgba(13, 13, 18, 0.72); backdrop-filter: blur(12px); }
+.immersive-no-link { color: var(--color-mute); font-size: 0.7rem; }
+.immersive-controls { position: absolute; z-index: 3; right: max(1.25rem, env(safe-area-inset-right)); bottom: max(1.15rem, env(safe-area-inset-bottom)); left: max(1.25rem, env(safe-area-inset-left)); display: flex; align-items: center; justify-content: center; gap: 1rem; border-top: 1px solid rgba(236, 232, 222, 0.11); padding-top: 0.9rem; }
+.immersive-nav-btn { width: 2.75rem; height: 2.75rem; border-radius: 50%; }
+.immersive-hint { color: var(--color-mute); font-size: 0.63rem; letter-spacing: 0.025em; text-align: center; }
+.immersive-hint i { display: inline-block; height: 0.7rem; margin: 0 0.7rem; border-left: 1px solid rgba(141, 135, 124, 0.55); vertical-align: middle; }
+.mobile-hint { display: none; }
+.immersive-boot { position: absolute; z-index: 3; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; pointer-events: none; }
+.immersive-boot p { margin: 0; color: var(--color-ink); font-family: var(--font-display); font-size: clamp(1.15rem, 2vw, 1.65rem); letter-spacing: -0.04em; }
+.boot-indicator { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-ember); box-shadow: 0 0 1rem rgba(212, 175, 55, 0.6); animation: boot-pulse 1.2s ease-in-out infinite; }
+.boot-skip-btn { display: inline-flex; min-height: 2.7rem; align-items: center; gap: 0.45rem; margin-top: 0.6rem; border: 1px solid rgba(212, 175, 55, 0.26); border-radius: 99px; padding: 0 0.85rem; color: var(--color-mute); background: rgba(8, 8, 12, 0.5); font-size: 0.64rem; pointer-events: auto; }
+.boot-skip-btn:hover { color: var(--color-ember); border-color: var(--color-ember); }
+.boot-skip-btn svg { width: 0.85rem; height: 0.85rem; }
+.immersive-empty,
+.immersive-fallback { position: absolute; z-index: 3; inset: 5rem 1.25rem 5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: auto; text-align: center; }
+.immersive-empty-mark { display: grid; width: 5rem; height: 5rem; place-items: center; margin-bottom: 1.5rem; border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 1.4rem; color: var(--color-ember); background: rgba(212, 175, 55, 0.06); }
+.immersive-empty-mark svg { width: 2.25rem; height: 2.25rem; stroke-width: 1.25; }
+.immersive-empty h1,
+.immersive-fallback h1 { margin: 0; font-family: var(--font-display); font-size: clamp(1.7rem, 4vw, 3rem); font-weight: 500; letter-spacing: -0.06em; }
+.immersive-empty > p:not(.immersive-eyebrow),
+.immersive-fallback > p:not(.immersive-eyebrow) { max-width: 28rem; margin: 0.8rem 0 1.2rem; color: var(--color-mute); font-size: 0.82rem; line-height: 1.7; }
+.immersive-fallback { align-items: stretch; justify-content: flex-start; padding-top: 2rem; }
+.immersive-fallback .immersive-eyebrow,
+.immersive-fallback h1,
+.immersive-fallback > p { align-self: center; text-align: center; }
+.immersive-fallback-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; margin: 1rem 0 1.5rem; text-align: left; }
+.immersive-fallback > .immersive-primary-btn { align-self: center; }
+@keyframes immersive-rise { from { opacity: 0; transform: translateY(0.6rem); } to { opacity: 1; transform: translateY(0); } }
+@keyframes boot-pulse { 0%, 100% { opacity: 0.45; transform: scale(0.82); } 50% { opacity: 1; transform: scale(1.08); } }
+
+.launcher-page :focus-visible,
+.immersive-page :focus-visible { outline: 2px solid var(--color-ember); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .launcher-layout { grid-template-columns: 12.5rem minmax(0, 1fr); }
+  .launcher-main { padding-inline: 1.45rem; }
+  .launcher-game-grid { grid-template-columns: repeat(auto-fill, minmax(8.8rem, 1fr)); }
+}
+@media (max-width: 700px) {
+  .launcher-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .launcher-sidebar { min-height: 4.15rem; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--color-line); padding: 0.55rem 1rem; }
+  .launcher-brand { min-height: 2.9rem; flex: 1; }
+  .launcher-brand-icon { width: 2.25rem; height: 2.25rem; border-radius: 0.7rem; }
+  .launcher-brand-icon svg { width: 1.15rem; height: 1.15rem; }
+  .launcher-nav,
+  .launcher-sidebar-spacer,
+  .launcher-local-note,
+  .launcher-sidebar-foot { display: none; }
+  .launcher-main { padding: 0.45rem 1rem 1.3rem; }
+  .launcher-topbar { min-height: 3.6rem; }
+  .launcher-time { font-size: 0.62rem; }
+  .launcher-top-actions { gap: 0.42rem; }
+  .launcher-action { min-height: 2.65rem; gap: 0.4rem; padding-inline: 0.68rem; font-size: 0.68rem; }
+  .launcher-action svg { width: 0.9rem; height: 0.9rem; }
+  .launcher-heading-row { margin-top: 1.8rem; }
+  .launcher-heading-mark { display: none; }
+  .launcher-toolbar { margin-top: 1.35rem; }
+  .launcher-search { flex: 1; width: auto; min-width: 0; }
+  .launcher-sort { gap: 0.25rem; padding-inline: 0.55rem; }
+  .launcher-sort > svg:first-child { display: none; }
+  .launcher-sort select { max-width: 7.5rem; font-size: 0.7rem; }
+  .launcher-mobile-filters { display: flex; gap: 0.45rem; overflow-x: auto; margin: 0.8rem -0.1rem 0; padding: 0.15rem 0.1rem 0.35rem; scrollbar-width: none; }
+  .launcher-mobile-filters::-webkit-scrollbar { display: none; }
+  .launcher-mobile-filters button { min-height: 2.45rem; flex: none; border: 1px solid var(--color-line); border-radius: 99px; padding: 0 0.8rem; color: var(--color-mute); background: rgba(255, 255, 255, 0.025); font-size: 0.68rem; }
+  .launcher-mobile-filters button.is-active { border-color: rgba(212, 175, 55, 0.42); color: var(--color-ink); background: rgba(212, 175, 55, 0.085); }
+  .launcher-section-heading { margin-top: 1.25rem; }
+  .launcher-game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 0.7rem; }
+  .launcher-cover-button { border-radius: 0.72rem; }
+  .launcher-cover-open { opacity: 1; transform: none; min-height: 2rem; font-size: 0.64rem; }
+  .launcher-cover-open svg { width: 0.72rem; height: 0.72rem; }
+  .launcher-bay-tag { top: 0.45rem; left: 0.45rem; font-size: 0.46rem; }
+  .launcher-game-title { font-size: 0.75rem; }
+  .launcher-edit-btn { width: 1.9rem; height: 1.9rem; }
+  .launcher-add-card { min-height: 10rem; padding: 0.7rem; }
+  .launcher-empty { min-height: 24rem; margin-top: 1rem; padding-inline: 1rem; }
+  .launcher-empty > p:not(.launcher-eyebrow) { font-size: 0.78rem; }
+  .launcher-main-foot { margin-top: 1.6rem; font-size: 0.56rem; }
+  .immersive-toolbar { min-height: 4.25rem; gap: 0.4rem; padding-right: max(0.7rem, env(safe-area-inset-right)); padding-left: max(0.75rem, env(safe-area-inset-left)); }
+  .immersive-brand-lockup { gap: 0.48rem; }
+  .immersive-mark { width: 2rem; height: 2rem; border-radius: 0.6rem; }
+  .immersive-mark svg { width: 1.1rem; height: 1.1rem; }
+  .immersive-brand-name { font-size: 0.82rem; }
+  .immersive-mode-label { display: none; }
+  .immersive-toolbar-actions { gap: 0.35rem; }
+  .immersive-count { display: none; }
+  .immersive-toolbar-btn { min-width: 2.7rem; min-height: 2.7rem; padding-inline: 0.65rem; }
+  .immersive-toolbar-btn span { display: none; }
+  .immersive-icon-btn { min-width: 2.7rem; min-height: 2.7rem; }
+  .immersive-focus { right: 1.1rem; bottom: 6rem; left: 1.1rem; }
+  .immersive-focus h1 { font-size: clamp(2rem, 10vw, 3.4rem); }
+  .immersive-meta { font-size: 0.72rem; }
+  .immersive-description { max-width: 25rem; font-size: 0.77rem; }
+  .immersive-controls { gap: 0.65rem; bottom: max(0.75rem, env(safe-area-inset-bottom)); padding-top: 0.68rem; }
+  .immersive-nav-btn { width: 2.65rem; height: 2.65rem; }
+  .immersive-hint { flex: 1; font-size: 0.57rem; }
+  .desktop-hint { display: none; }
+  .mobile-hint { display: inline; }
+  .immersive-empty,
+  .immersive-fallback { inset: 4.4rem 0.8rem 4.8rem; }
+}
+@media (max-width: 380px) {
+  .launcher-brand-word { font-size: 0.92rem; }
+  .launcher-time { gap: 0.35rem; font-size: 0.56rem; }
+  .launcher-top-actions { gap: 0.3rem; }
+  .launcher-action { min-height: 2.55rem; padding-inline: 0.55rem; font-size: 0.62rem; }
+  .launcher-heading-row h1 { font-size: 1.85rem; }
+  .launcher-sort select { max-width: 6.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .launcher-page *,
+  .immersive-page * { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .boot-indicator { animation: none; }
+}
+
 /* Flash de "ligar" do console: branco -> preto -> transparente */
 .power-flash {
   animation: power-flash 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
