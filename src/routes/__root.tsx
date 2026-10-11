@@ -11,7 +11,7 @@ export const Route = createRootRoute({
       { title: "NJengine" },
       {
         name: "description",
-        content: "NJengine — biblioteca pessoal de jogos com catálogo em grade e modo imersivo.",
+        content: "NJengine — biblioteca pessoal de jogos com abertura cinematográfica e carrossel horizontal.",
       },
       { name: "theme-color", content: "#07080b" },
     ],
