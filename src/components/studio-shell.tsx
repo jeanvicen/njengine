@@ -1,9 +1,8 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ImagePlus, Play, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Gamepad2, Volume2, VolumeX, ImagePlus, Play, X } from "lucide-react";
 import { compressImageFile, paintCoverDataUrl } from "@/studio/covers";
 import type { EngineHandle, Phase } from "@/studio/create-engine";
 
-const PlaystationExperience = lazy(() => import("./playstation-experience"));
 import {
   createSlots,
   isFilled,
@@ -22,10 +21,14 @@ export function StudioShell() {
   const [slots, setSlots] = useState<GameSlot[]>(createSlots);
   const [phase, setPhase] = useState<Phase>("intro");
   const [progress, setProgress] = useState(0);
+  const [openingComplete, setOpeningComplete] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [webgl, setWebgl] = useState(true);
   const [engineOn, setEngineOn] = useState(false);
+  const [activeSlot, setActiveSlot] = useState(0);
+  const [soundOn, setSoundOn] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
 
@@ -71,6 +74,16 @@ export function StudioShell() {
     if (!engineOn) return;
     engineRef.current?.sync(slots);
   }, [slots, engineOn]);
+
+  useEffect(() => {
+    const finishOpening = window.setTimeout(() => {
+      engineRef.current?.skip();
+      setPhase("gallery");
+      setProgress(100);
+      setOpeningComplete(true);
+    }, 6500);
+    return () => window.clearTimeout(finishOpening);
+  }, []);
 
   useEffect(() => {
     engineRef.current?.setSelected(selectedId);
@@ -148,47 +161,108 @@ export function StudioShell() {
     return writeSlots(next);
   }
 
+  function playUiSound(frequency = 520) {
+    if (!soundOn) return;
+    try {
+      const Context = window.AudioContext;
+      if (!Context) return;
+      const context = audioContextRef.current ?? new Context();
+      audioContextRef.current = context;
+      if (context.state === "suspended") void context.resume();
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.72, context.currentTime + 0.075);
+      gain.gain.setValueAtTime(0.0001, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.055, context.currentTime + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.095);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.1);
+    } catch {
+      // Audio is an enhancement; keep the selector usable when unavailable.
+    }
+  }
+
+  function moveSelection(next: number) {
+    const wrapped = (next + 3) % 3;
+    setActiveSlot(wrapped);
+    playUiSound(460 + wrapped * 85);
+  }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!openingComplete && (phase !== "gallery" || progress < 100)) return;
+      if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") moveSelection(activeSlot + 1);
+      if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") moveSelection(activeSlot - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeSlot, openingComplete, phase, progress, soundOn]);
+
   return (
     <main className="fixed inset-0 overflow-hidden bg-void text-ink">
-      {phase === "gallery" && progress >= 100 && (
-        <Suspense
-          fallback={
-            <div className="fixed inset-0 z-[60] grid place-items-center bg-[#0a0e1a] text-white">
-              <p className="kicker">Abrindo NJengines…</p>
-            </div>
-          }
-        >
-          <PlaystationExperience />
-        </Suspense>
-      )}
       <canvas ref={canvasRef} className="stage-canvas absolute inset-0 h-full w-full" />
       <div className="vignette pointer-events-none absolute inset-0" />
       <div className="grain pointer-events-none absolute inset-0" />
       <div className="veil pointer-events-none absolute inset-0 z-10 bg-void" />
       <div ref={cursorRef} className="cursor-ring pointer-events-none fixed top-0 left-0 z-40" />
 
-      {phase === "gallery" && progress >= 100 && (
-        <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
-          <header className="flex items-start justify-between gap-4">
-            <div>
-              <p className="font-display text-xl text-ink">NJengines</p>
-              <p className="kicker mt-1 text-mute">Estúdio</p>
+      {!openingComplete && phase !== "gallery" && (
+        <div className="opening-prompt absolute inset-x-0 bottom-12 z-20 flex flex-col items-center gap-3 px-5 text-center">
+          <p className="kicker text-ember">NJENGINE · INICIANDO</p>
+          <p className="opening-copy">Preparando sua biblioteca de jogos</p>
+          <button
+            type="button"
+            className="opening-skip"
+            onClick={() => {
+              engineRef.current?.skip();
+              setPhase("gallery");
+              setProgress(100);
+              setOpeningComplete(true);
+            }}
+          >
+            PULAR ABERTURA <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {(openingComplete || (phase === "gallery" && progress >= 100)) && (
+        <section className="selector-screen absolute inset-0 z-20 flex flex-col" aria-label="Seletor de jogos NJengine">
+          <header className="selector-header flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="brand-mark"><Gamepad2 aria-hidden="true" /></div>
+              <div><p className="selector-brand">NJENGINE</p><p className="selector-subtitle">SUA PRÓXIMA JOGADA</p></div>
             </div>
-            <p className="kicker text-right text-mute">
-              12 baias
-              <span className="mt-1 block tabular-nums text-ink">
-                {filled} {filled === 1 ? "jogo" : "jogos"}
-              </span>
-            </p>
+            <button className="sound-toggle" type="button" onClick={() => setSoundOn((value) => !value)} aria-label={soundOn ? "Desativar sons" : "Ativar sons"}>
+              {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+              <span>{soundOn ? "SOM LIGADO" : "SOM DESLIGADO"}</span>
+            </button>
           </header>
 
-          <div className="flex items-end justify-between gap-4">
-            <p className="kicker max-w-xs text-mute">
-              {hover ? slotTitle(hover) : "Arraste o muro. Clique numa baia."}
-            </p>
-            <p className="kicker text-right text-ember">Em breve, os jogos</p>
+          <div className="selector-content">
+            <div className="selector-heading"><p className="kicker">BIBLIOTECA</p><h1>Escolha seu jogo</h1><p className="selector-hint">Um novo universo começa aqui.</p></div>
+            <div className="game-rail" role="tablist" aria-label="Espaços de jogo">
+              {[0, 1, 2].map((index) => (
+                <button key={index} type="button" role="tab" aria-selected={activeSlot === index} className={`empty-game-card ${activeSlot === index ? "is-active" : ""}`} onClick={() => moveSelection(index)}>
+                  <span className="card-number">0{index + 1}</span>
+                  <span className="empty-card-symbol"><Gamepad2 aria-hidden="true" /></span>
+                  <span className="card-label">ESPAÇO VAZIO</span>
+                  <span className="card-status">JOGOS EM BREVE</span>
+                </button>
+              ))}
+            </div>
+            <div className="rail-controls">
+              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot - 1)} aria-label="Espaço anterior"><ChevronLeft /></button>
+              <div className="rail-dots" aria-label={`Espaço ${activeSlot + 1} de 3`}>{[0, 1, 2].map((index) => <span key={index} className={activeSlot === index ? "active" : ""} />)}</div>
+              <button type="button" className="rail-arrow" onClick={() => moveSelection(activeSlot + 1)} aria-label="Próximo espaço"><ChevronRight /></button>
+            </div>
+            <p className="coming-soon">A biblioteca está sendo preparada<span> — em breve, novas aventuras.</span></p>
           </div>
-        </div>
+          <footer className="selector-footer"><span>© NJENGINE</span><span>← → NAVEGAR <i /> A / D</span></footer>
+        </section>
       )}
 
       {!webgl && (
