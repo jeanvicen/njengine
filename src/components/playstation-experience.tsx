@@ -1,6 +1,7 @@
 import { MemoryRouter } from "react-router-dom";
 import PlaystationRevampExperience from "../App.jsx";
 import "../index.css";
+import "../nj-experience.css";
 
 /**
  * Loaded only after NJengines' original intro reaches its gallery phase.
@@ -15,7 +16,7 @@ export default function PlaystationExperience() {
 
   return (
     <MemoryRouter initialEntries={[initialEntry]}>
-      <div className="fixed inset-0 z-[60] overflow-x-hidden overflow-y-auto bg-[#0a0e1a]">
+      <div className="nj-experience fixed inset-0 z-[60] overflow-x-hidden overflow-y-auto bg-[#0a0e1a]">
         <PlaystationRevampExperience />
       </div>
     </MemoryRouter>

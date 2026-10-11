@@ -1,227 +1,112 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { SearchIcon } from "lucide-react";
-import { userProfile } from "../data/mockData.js";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  ChevronDown,
+  CircleHelp,
+  Gamepad2,
+  Home,
+  LibraryBig,
+  Menu,
+  MonitorPlay,
+  ShoppingBag,
+  Smartphone,
+  UserRound,
+  X,
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useDualSenseWS } from "./Anikator/useDualSenseWS";
 
-const PSLogoSVG = () => (
-    <svg viewBox="0 0 512 512" style={{ height: "40px", width: "auto", fill: "currentColor" }}>
-        {/* Simplified PS Logo path, you can use a detailed one if needed, this is just a placeholder path assuming a real PS logo if I don't have the exact exact paths, but let's use a widely known PS logo layout or a detailed SVG */}
-        <path d="M428.1 364.5c..." />
-        {/* Wait, instead of typing a huge SVG, I'll use an img to the public / logo or a crisp text if public/ps-logo.svg does not exist. Let's use a very accurate path for PS logo if possible. */}
-        {/* I'll use a reliable inline SVG for PlayStation. */}
-        <path fill="#ffffff" d="M110.8,300l0-143.1l43.2,0l0,123.8c0,27.9,32.7,50.7,73.1,50.7c21.8,0,42.5-6.5,56.5-17.7l17,31.4c-19,15.6-45.6,24.3-73.5,24.3C161.4,369.4,110.8,338.3,110.8,300z" />
-        <path fill="#ffffff" d="M228.6,80.1l0,152.1c0,20.8,40.6,37.8,90.8,37.8c34.1,0,63.9-8.4,79.5-21l-14.7-32.5c-11.4,9-34.9,15.7-64.8,15.7c-26.6,0-48.2-7.5-48.2-16.8V80.1H228.6z" />
-        <path fill="#ffffff" d="M312.4,264l124-38.3v-38.6l-124,38.3V264z" />
-        <path fill="#ffffff" d="M312.4,213.9l124-38.3v-38.6l-124,38.2V213.9z" />
-        <path fill="#ffffff" d="M0.3,371.3l124-38.3v-38.6l-124,38.3V371.3z" />
-        <path fill="#ffffff" d="M0.3,321.2l124-38.3V244.3l-124,38.3V321.2z" />
-        <path fill="#ffffff" d="M205.3,0l124,38.3V77L205.3,38.6V0z" />
-    </svg>
-);
+const primaryLinks = [
+  { label: "Início", path: "/home", Icon: Home },
+  { label: "Biblioteca", path: "/library", Icon: LibraryBig },
+  { label: "Loja", path: "/store", Icon: ShoppingBag },
+  { label: "Mídia", path: "/media", Icon: MonitorPlay },
+];
 
-const GlobalNavbar = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const currentPath = location.pathname;
-    const { session, connected, status } = useDualSenseWS();
-    const [showQR, setShowQR] = useState(false);
-    const controllerStatusMessage = connected
-        ? "Phone controller connected."
-        : ({
-            unavailable: "Controller signaling is unavailable. Check the deployed database connection and use a secure browser context.",
-            "connection-failed": "Direct pairing failed. Try another network; a TURN fallback is not configured.",
-            waiting: "Scan with your phone and keep both screens online. Some network or firewall setups may block direct pairing.",
-        }[status] || "Preparing the controller connection…");
+function Brand() {
+  return (
+    <Link className="nj-brand" to="/home" aria-label="NJengines — Início">
+      <span className="nj-brand-mark" aria-hidden="true"><span /></span>
+      <span className="nj-brand-name">NJ<span>ENGINES</span></span>
+    </Link>
+  );
+}
 
-    const navItems = [
-        { label: "Games", path: "/home" },
-        { label: "Library", path: "/library" },
-        { label: "Media", path: "/media" },
-        { label: "Store", path: "/store" },
-        { label: "Showcase", path: "/showcase" },
-        { label: "Accessories", path: "/accessories" },
-        { label: "Subscriptions", path: "/subscriptions" },
-        { label: "Profile", path: "/profile" },
-    ];
+export default function GlobalNavbar() {
+  const { pathname } = useLocation();
+  const { session } = useDualSenseWS();
+  const [showQR, setShowQR] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-    return (
-        <nav style={{
-            position: "fixed",
-            top: 0, left: 0, right: 0,
-            height: "72px", minHeight: "72px",
-            display: "flex", alignItems: "center",
-            padding: "0 32px",
-            background: "linear-gradient(to bottom, rgba(5,8,18,0.85) 0%, transparent 100%)",
-            zIndex: 1000,
-            transition: "all 0.3s ease",
-        }}>
-            {/* Logo */}
-            <Link to="/home" style={{
-                marginRight: "40px", display: "flex", alignItems: "center",
-                transition: "opacity 0.3s ease"
-            }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
-                onMouseLeave={e => e.currentTarget.style.opacity = 1}
-            >
-                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Playstation_logo_colour.svg" alt="PS Logo" style={{ height: "36px", filter: "brightness(0) invert(1)" }} />
-            </Link>
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowQR(false);
+        setMoreOpen(false);
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, []);
 
-            {/* Navigation Links */}
-            <div style={{ display: "flex", gap: "28px" }}>
-                {navItems.map((item) => {
-                    // Exact path match (ignores query strings)
-                    const isActive = currentPath === item.path;
-                    return (
-                        <Link
-                            key={item.label}
-                            to={item.path}
-                            style={{
-                                textDecoration: "none",
-                                fontSize: "22px",
-                                fontFamily: "var(--font-ui)",
-                                fontWeight: 400,
-                                color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
-                                padding: "8px 0",
-                                display: "flex", alignItems: "center",
-                                borderBottom: isActive ? "2px solid white" : "2px solid transparent",
-                                transition: "all 0.2s ease",
-                                letterSpacing: "0.5px",
-                            }}
-                            onMouseEnter={e => { if (!isActive) { e.currentTarget.style.color = "rgba(255,255,255,0.9)"; e.currentTarget.style.borderBottomColor = "rgba(255,255,255,0.3)"; } }}
-                            onMouseLeave={e => { if (!isActive) { e.currentTarget.style.color = "rgba(255,255,255,0.55)"; e.currentTarget.style.borderBottomColor = "transparent"; } }}
-                        >
-                            {item.label}
-                        </Link>
-                    );
-                })}
-            </div>
+  const closeMenu = () => setMoreOpen(false);
+  const moreIsActive = ["/accessories", "/subscriptions"].includes(pathname);
 
-            {/* Right side icons */}
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "24px" }}>
-                <button
-                    onClick={() => setShowQR(true)}
-                    style={{
-                        background: "rgba(255,255,255,0.1)",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        color: "white",
-                        padding: "10px 24px",
-                        borderRadius: "20px",
-                        cursor: "pointer",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        transition: "all 0.3s ease",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.2)";
-                        e.currentTarget.style.transform = "translateY(-1px)";
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                        e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
-                    </svg>
-                    Connect Phone
-                </button>
-
-                <button
-                    type="button"
-                    aria-label="Open game library"
-                    onClick={() => navigate("/library")}
-                    style={{ background: "none", border: "none", padding: "8px", color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "all 0.3s" }}
-                >
-                    <SearchIcon size={20} />
-                </button>
-
-                {/* User Avatar */}
-                <Link to="/profile" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}>
-                    <div style={{
-                        width: "36px", height: "36px", borderRadius: "50%",
-                        background: "linear-gradient(135deg, #0070d1, #00d4ff)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontWeight: 700, fontSize: "14px", color: "white",
-                        border: "2px solid rgba(255,255,255,0.2)",
-                    }}>
-                        {userProfile.username.substring(0, 2).toUpperCase()}
-                    </div>
-                </Link>
-            </div>
-
-            {/* QR Code Modal */}
-            {showQR && (
-                <div
-                    style={{
-                        position: "fixed",
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundColor: "rgba(0,0,0,0.8)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backdropFilter: "blur(10px)",
-                        zIndex: 99999,
-                        cursor: "pointer"
-                    }}
-                    onClick={() => setShowQR(false)}
-                >
-                    <div
-                        style={{
-                            background: "#1a1f2e",
-                            padding: "32px",
-                            borderRadius: "24px",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                            cursor: "auto"
-                        }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <h3 style={{ color: "white", fontSize: "24px", fontWeight: "bold", marginBottom: "24px" }}>Scan to Control</h3>
-                        <div style={{ background: "white", padding: "16px", borderRadius: "16px", marginBottom: "24px" }}>
-                            <QRCodeSVG
-                                value={`${window.location.origin}/controller?session=${session}`}
-                                size={220}
-                            />
-                        </div>
-                        <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                            Session ID: <span style={{ color: "white", fontFamily: "monospace", letterSpacing: "2px", wordBreak: "break-all" }}>{session}</span>
-                        </p>
-                        <p role="status" aria-live="polite" style={{ color: "rgba(255,255,255,0.55)", marginTop: "8px", maxWidth: "320px", textAlign: "center", fontSize: "13px", lineHeight: 1.5 }}>
-                            {controllerStatusMessage}
-                        </p>
-                        <button
-                            onClick={() => setShowQR(false)}
-                            style={{
-                                marginTop: "16px",
-                                padding: "8px 24px",
-                                background: "rgba(255,255,255,0.1)",
-                                border: "none",
-                                borderRadius: "20px",
-                                color: "white",
-                                cursor: "pointer",
-                                transition: "all 0.3s"
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
-                            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+  return (
+    <>
+      <header className="nj-topbar">
+        <Brand />
+        <nav className="nj-desktop-nav" aria-label="Navegação principal">
+          {primaryLinks.map(({ label, path, Icon }) => {
+            const active = pathname === path;
+            return <Link key={path} to={path} className={`nj-nav-link${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={16} strokeWidth={1.7} /><span>{label}</span></Link>;
+          })}
+          <Link to="/showcase" className={`nj-nav-link${pathname === "/showcase" ? " is-active" : ""}`} aria-current={pathname === "/showcase" ? "page" : undefined}><Gamepad2 size={16} strokeWidth={1.7} /><span>Controles</span></Link>
+          <div className="nj-more-wrap">
+            <button type="button" className={`nj-nav-link nj-more-button${moreOpen || moreIsActive ? " is-active" : ""}`} onClick={() => setMoreOpen((value) => !value)} aria-expanded={moreOpen} aria-haspopup="menu"><Menu size={16} /><span>Mais</span><ChevronDown size={14} /></button>
+            {moreOpen && <div className="nj-more-menu" role="menu">
+              <Link role="menuitem" to="/accessories" onClick={closeMenu}><Gamepad2 size={16} />Acessórios</Link>
+              <Link role="menuitem" to="/subscriptions" onClick={closeMenu}><CircleHelp size={16} />Assinaturas</Link>
+            </div>}
+          </div>
         </nav>
-    );
-};
+        <div className="nj-topbar-actions">
+          <button type="button" className="nj-connect-button" onClick={() => setShowQR(true)} aria-label="Ver conexão do celular">
+            <Smartphone size={16} /><span>Conectar celular</span>
+          </button>
+          <Link to="/profile" className={`nj-profile-link${pathname === "/profile" ? " is-active" : ""}`} aria-label="Perfil" aria-current={pathname === "/profile" ? "page" : undefined}><UserRound size={19} /></Link>
+          <button type="button" className="nj-mobile-more-trigger" onClick={() => setMoreOpen((value) => !value)} aria-expanded={moreOpen} aria-label="Mais opções"><Menu size={20} /></button>
+        </div>
+        {moreOpen && <div className="nj-mobile-more-menu">
+          <Link to="/showcase" onClick={closeMenu}><Gamepad2 size={17} /> Controles</Link>
+          <Link to="/accessories" onClick={closeMenu}><Gamepad2 size={17} /> Acessórios</Link>
+          <Link to="/subscriptions" onClick={closeMenu}><CircleHelp size={17} /> Assinaturas</Link>
+        </div>}
+      </header>
 
-export default GlobalNavbar;
+      <nav className="nj-mobile-nav" aria-label="Navegação para celular">
+        {primaryLinks.slice(0, 4).map(({ label, path, Icon }) => {
+          const active = pathname === path;
+          return <Link key={path} to={path} className={`nj-mobile-link${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}><Icon size={19} strokeWidth={1.8} /><span>{label}</span></Link>;
+        })}
+        <Link to="/profile" className={`nj-mobile-link${pathname === "/profile" ? " is-active" : ""}`} aria-current={pathname === "/profile" ? "page" : undefined}><UserRound size={19} strokeWidth={1.8} /><span>Perfil</span></Link>
+      </nav>
+
+      {showQR && (
+        <div className="nj-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowQR(false); }}>
+          <section className="nj-connect-modal" role="dialog" aria-modal="true" aria-labelledby="nj-connect-title">
+            <button type="button" className="nj-modal-close" onClick={() => setShowQR(false)} aria-label="Fechar"><X size={20} /></button>
+            <div className="nj-empty-mark"><Smartphone size={22} /></div>
+            <p className="nj-kicker">CONEXÃO</p>
+            <h2 id="nj-connect-title">Conectar celular</h2>
+            <p className="nj-modal-copy">A conexão entre dispositivos usa WebRTC/P2P e sinalização. Redes com NAT ou firewall restritivos podem impedir a conexão; não há relay TURN configurado, então o funcionamento não é garantido.</p>
+            <div className="nj-qr-frame"><QRCodeSVG value={`${window.location.origin}/controller?session=${session || ""}`} size={176} includeMargin /></div>
+            <p className="nj-session-label">Sessão local <code>{session || "—"}</code></p>
+            <button type="button" className="nj-button nj-button-quiet nj-modal-dismiss" onClick={() => setShowQR(false)}>Fechar</button>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}

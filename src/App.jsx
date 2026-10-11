@@ -6,8 +6,7 @@ import PSStoreUI from "./Components/StoreUI";
 import HomeDashboard from "./Components/HomeDashboard";
 import ControllerDashboard from "./Components/Anikator/ControllerDashboard";
 import ControllerInterface from "./Components/Anikator/ControllerInterface";
-import HardwareStore from "./Components/Anikator/HardwareStore";
-import VirtualCursor from "./Components/Anikator/VirtualCursor";
+import { AccessoriesPage } from "./Components/NJExperiencePages.jsx";
 import PSMediaUI from "./Components/MediaUI";
 import Profile from "./Components/Profile";
 import Layout from "./Components/Layout";
@@ -17,7 +16,6 @@ import SubscriptionsPage from "./Components/SubscriptionsPage";
 export default function PlaystationRevampExperience() {
   return (
     <>
-      <VirtualCursor />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/home" replace />} />
@@ -25,7 +23,7 @@ export default function PlaystationRevampExperience() {
           <Route path="/media" element={<PSMediaUI />} />
           <Route path="/store" element={<PSStoreUI />} />
           <Route path="/showcase" element={<ControllerDashboard />} />
-          <Route path="/accessories" element={<HardwareStore />} />
+          <Route path="/accessories" element={<AccessoriesPage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/library" element={<GameLibrary />} />
           <Route path="/subscriptions" element={<SubscriptionsPage />} />

@@ -120,11 +120,9 @@ export default function ControllerDashboard() {
         let glowColor = 'rgba(0,0,0,0)';
 
         // 1. Determine Color (Based on the physical side of the controller)
-        const redButtons = ['DPAD_LEFT', 'DPAD_RIGHT', 'DPAD_UP', 'DPAD_DOWN', 'L_TRIGGER'];
-        const blueButtons = ['SQUARE', 'CIRCLE', 'TRIANGLE', 'CROSS', 'R_TRIGGER'];
+        const controllerButtons = ['DPAD_LEFT', 'DPAD_RIGHT', 'DPAD_UP', 'DPAD_DOWN', 'L_TRIGGER', 'SQUARE', 'CIRCLE', 'TRIANGLE', 'CROSS', 'R_TRIGGER'];
 
-        if (redButtons.includes(action)) glowColor = 'rgba(255, 0, 85, 0.5)';
-        else if (blueButtons.includes(action)) glowColor = 'rgba(0, 150, 255, 0.5)';
+        if (controllerButtons.includes(action)) glowColor = 'rgba(213, 184, 92, 0.48)';
 
         // 2. Determine Position (Based strictly on 3D tilt direction)
         let position = '50% 50%';
@@ -153,7 +151,7 @@ export default function ControllerDashboard() {
     }, [action]);
 
     return (
-        <div className="relative w-screen h-screen bg-[#0a0f16] overflow-hidden flex flex-col items-center justify-center">
+        <div className="nj-controller-showcase relative w-full min-h-[100dvh] bg-[#090a0c] overflow-hidden flex flex-col items-center justify-center">
 
             {/* Background flash layer */}
             <div ref={bgRef} className="absolute inset-0 pointer-events-none opacity-0 mix-blend-screen mix-blend-lighten"></div>
@@ -171,17 +169,17 @@ export default function ControllerDashboard() {
             </div>
 
             {/* Text UI */}
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-between py-[120px] px-12">
-                <h1 className="text-4xl font-black text-white tracking-tighter uppercase opacity-20 select-none pointer-events-none">
-                    DUALSENSE EXPERIENCE
+            <div className="absolute inset-0 z-0 flex flex-col items-center justify-between py-[calc(100px+env(safe-area-inset-top))] px-4 sm:px-8">
+                <h1 className="text-[clamp(1rem,3vw,2.1rem)] font-semibold text-white tracking-[0.22em] uppercase opacity-45 text-center select-none pointer-events-none">
+                    NJENGINES · CONTROLE
                 </h1>
 
-                <h2 ref={textRef} className="text-8xl font-black text-white tracking-widest opacity-30 select-none pointer-events-none transition-colors duration-100">
-                    {action ? action.replace('_', ' ') : "AWAITING INPUT"}
+                <h2 ref={textRef} className="max-w-full text-[clamp(1.25rem,6vw,4.75rem)] font-semibold text-white tracking-[0.14em] text-center break-words opacity-45 select-none pointer-events-none transition-colors duration-100">
+                    {action ? action.replace('_', ' ') : "AGUARDANDO SINAL"}
                 </h2>
 
-                <p className="text-white font-bold text-lg uppercase tracking-widest opacity-40 select-none pointer-events-none">
-                    Press any button to feel &nbsp;·&nbsp; R1/R2 to exit &nbsp;·&nbsp; ESC to show cursor
+                <p className="max-w-full text-center text-white font-medium text-xs sm:text-sm uppercase tracking-[0.16em] opacity-60 select-none pointer-events-none">
+                    Pressione um botão &nbsp;·&nbsp; R1/R2 para voltar
                 </p>
             </div>
 
@@ -194,10 +192,10 @@ export default function ControllerDashboard() {
             {/* Connection Popup */}
             {!hasConnected && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-1000">
-                    <div className="bg-[#0f141e] border border-white/10 rounded-3xl p-12 flex flex-col items-center max-w-lg text-center shadow-[0_0_80px_rgba(0,150,255,0.2)]">
-                        <h2 className="text-3xl font-black text-white tracking-widest uppercase mb-4">Connect Controller</h2>
-                        <p className="text-white/60 mb-8 font-medium leading-relaxed text-lg">
-                            Scan this QR code with your phone to use it as a DualSense controller for this showcase experience.
+                    <div className="nj-controller-connect-card bg-[#121315] border border-white/10 rounded-3xl p-6 sm:p-10 flex flex-col items-center max-w-lg w-[min(92vw,32rem)] max-h-[90dvh] overflow-y-auto text-center">
+                        <h2 className="text-[clamp(1.35rem,5vw,1.9rem)] font-semibold text-white tracking-[0.12em] uppercase mb-4">Conectar celular</h2>
+                        <p className="text-white/65 mb-6 font-medium leading-relaxed text-sm sm:text-base">
+                            Escaneie no celular para abrir o controle desta experiência. Redes com NAT ou firewall restritivos podem impedir a conexão; não há relay TURN configurado.
                         </p>
                         <div className="bg-white p-6 rounded-2xl mb-8 shadow-2xl">
                             <QRCodeSVG
@@ -206,7 +204,7 @@ export default function ControllerDashboard() {
                             />
                         </div>
                         <p className="text-white/40 text-sm font-bold tracking-widest uppercase">
-                            Session: <span className="text-white/80 text-lg ml-2">{session}</span>
+                            Sessão: <span className="text-white/80 text-lg ml-2">{session}</span>
                         </p>
                     </div>
                 </div>
