@@ -13,19 +13,6 @@ import {
   type GameSlot,
 } from "@/studio/slots";
 
-const BOOT_LINES = [
-  "Núcleo gráfico",
-  "Biblioteca",
-  "Ambiente de jogos",
-  "Renderização",
-  "NJENGINE",
-];
-
-function bootLine(progress: number): string {
-  const index = Math.min(BOOT_LINES.length - 1, Math.floor((progress / 100) * BOOT_LINES.length));
-  return BOOT_LINES[index];
-}
-
 export function StudioShell() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
@@ -255,23 +242,35 @@ export function StudioShell() {
 
       <div className="hud-pad pointer-events-none absolute inset-0 z-20 flex flex-col justify-between">
         <header className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <p className="font-display text-xl tracking-wide text-ink">
-              NJ<span className="text-ember">ENGINE</span>
-            </p>
-            <p className="kicker mt-1 hidden text-mute sm:block">Console Web</p>
-          </div>
-          <div className="flex items-center gap-4 text-mute">
+          {phase === "gallery" && (
+            <div className="flex items-center gap-3">
+              <p className="font-display text-xl tracking-wide text-ink">
+                NJ<span className="text-ember">ENGINE</span>
+              </p>
+              <p className="kicker mt-1 hidden text-mute sm:block">Console Web</p>
+            </div>
+          )}
+          <div
+            className={
+              phase === "intro"
+                ? "ml-auto flex items-center gap-4 text-mute"
+                : "flex items-center gap-4 text-mute"
+            }
+          >
             {phase === "gallery" && (
               <p className="kicker hidden tabular-nums sm:block">
                 {filled} {filled === 1 ? "jogo" : "jogos"}
               </p>
             )}
-            <span className="flex items-center gap-1.5">
-              <Wifi className="size-3.5 text-ember" />
-              <span className="kicker hidden sm:inline">Online</span>
-            </span>
-            <span className="kicker tabular-nums text-ink">{clock}</span>
+            {phase === "gallery" && (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <Wifi className="size-3.5 text-ember" />
+                  <span className="kicker hidden sm:inline">Online</span>
+                </span>
+                <span className="kicker tabular-nums text-ink">{clock}</span>
+              </>
+            )}
             <button
               type="button"
               className="ghost-btn pointer-events-auto min-h-9 px-2.5"
@@ -280,25 +279,18 @@ export function StudioShell() {
             >
               {soundOn ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
             </button>
-            <User className="size-4" />
+            {phase === "gallery" && <User className="size-4" />}
           </div>
         </header>
 
         {phase === "intro" ? (
-          <div>
-            <p className="font-display text-5xl tabular-nums text-ink">
-              {String(progress).padStart(2, "0")}
-            </p>
-            <p className="kicker mt-2 text-mute">
-              {bootLine(progress)}
-              <span className="boot-caret text-ember">▮</span>
-            </p>
-            <div className="mt-4 h-px w-48 bg-line">
-              <div
-                className="h-px w-full origin-left bg-ember"
-                style={{ transform: `scaleX(${progress / 100})` }}
-              />
-            </div>
+          <div className="intro-wordmark pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center">
+            <h1
+              className="text-ink"
+              style={{ opacity: Math.min(1, 0.82 + (progress / 100) * 0.18) }}
+            >
+              NJ<span className="text-ember">ENGINE</span>
+            </h1>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
