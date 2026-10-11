@@ -19,7 +19,6 @@ export function StudioShell() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const [slots, setSlots] = useState<GameSlot[]>(createSlots);
   const [phase, setPhase] = useState<Phase>("intro");
-  const [progress, setProgress] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [webgl, setWebgl] = useState(true);
@@ -51,7 +50,7 @@ export function StudioShell() {
         slots: slotsRef.current,
         reduced,
         onPhase: (next) => setPhase(next),
-        onProgress: (value) => setProgress(value),
+        onProgress: () => {},
         onSelect: (id) => {
           setSelectedId(id);
           if (id) playUiSoundRef.current?.(140, 0.22, "sawtooth");
@@ -283,16 +282,7 @@ export function StudioShell() {
           </div>
         </header>
 
-        {phase === "intro" ? (
-          <div className="intro-wordmark pointer-events-none absolute inset-0 flex items-center justify-center px-4 text-center">
-            <h1
-              className="text-ink"
-              style={{ opacity: Math.min(1, 0.82 + (progress / 100) * 0.18) }}
-            >
-              NJ<span className="text-ember">ENGINE</span>
-            </h1>
-          </div>
-        ) : (
+        {phase !== "intro" && (
           <div className="flex flex-col gap-4">
             <FocusPanel slot={focused} empty={filled === 0} />
             <div className="console-hints flex items-center justify-between gap-4 border-t border-line pt-3">
