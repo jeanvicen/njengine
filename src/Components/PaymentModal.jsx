@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * PaymentModal.jsx — Stripe/PayPal Style Payment Checkout
+ * PaymentModal.jsx — simulated checkout UI (no payment integration)
  *
  * Features:
  *  • Card payment (Stripe-style UI)
@@ -41,7 +41,7 @@ const PSPlusIcon = () => (
 const PAYMENT_METHODS = [
     { id: "card", label: "Credit / Debit Card", icon: <CardIcon /> },
     { id: "paypal", label: "PayPal", icon: <PayPalIcon /> },
-    { id: "wallet", label: "PS Wallet (₹2,340)", icon: "💳" },
+    { id: "wallet", label: "Demo Wallet", icon: "💳" },
 ];
 
 const PS_PLUS_PLANS = [
@@ -150,10 +150,10 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                             </div>
                             <div>
                                 <div style={{ fontSize: "17px", fontWeight: 800 }}>
-                                    {mode === "subscription" ? "Choose Your Plan" : "Secure Checkout"}
+                                    {mode === "subscription" ? "Choose a Demo Plan" : "Demo Checkout"}
                                 </div>
                                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: "4px" }}>
-                                    <LockIcon /> SSL Secured Checkout
+                                    DEMO ONLY · NO PAYMENT PROCESSED · DO NOT ENTER REAL CARD DETAILS
                                 </div>
                             </div>
                         </div>
@@ -191,12 +191,12 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                                 >
                                     <CheckIcon />
                                 </motion.div>
-                                <div style={{ fontSize: "24px", fontWeight: 900, marginBottom: "8px" }}>Payment Successful!</div>
+                                <div style={{ fontSize: "24px", fontWeight: 900, marginBottom: "8px" }}>Demo flow complete</div>
                                 <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.55)", marginBottom: "6px" }}>
-                                    {mode === "subscription" ? `PS Plus ${PS_PLUS_PLANS.find(p => p.id === selectedPlan)?.name} activated` : `${game?.title} added to your library`}
+                                    {mode === "subscription" ? `No subscription was created.` : `No purchase was created for ${game?.title}.`}
                                 </div>
                                 <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginBottom: "28px" }}>
-                                    Confirmation sent to your email
+                                    No payment was processed and no email was sent.
                                 </div>
                                 <button onClick={onClose} style={{
                                     padding: "12px 36px", borderRadius: "12px",
@@ -358,7 +358,7 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                                         <div style={{ fontSize: "48px", marginBottom: "16px" }}>🅿️</div>
                                         <div style={{ fontSize: "18px", fontWeight: 800, marginBottom: "8px", color: "#003087" }}>PayPal</div>
                                         <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "24px" }}>
-                                            You'll be redirected to PayPal to complete your payment securely
+                                            This demo does not connect to PayPal or process a payment.
                                         </p>
                                         <button onClick={handlePay} style={{
                                             width: "100%", padding: "14px",
@@ -366,16 +366,16 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                                             cursor: "pointer", color: "#0a0a0a", fontWeight: 800, fontSize: "16px",
                                             boxShadow: "0 4px 16px rgba(255,196,57,0.4)", transition: "all 0.2s",
                                         }}>
-                                            Pay with PayPal
+                                            Demo Checkout
                                         </button>
                                     </div>
                                 ) : payMethod === "wallet" ? (
                                     <div style={{ textAlign: "center", padding: "20px 0" }}>
                                         <div style={{ fontSize: "48px", marginBottom: "16px" }}>💳</div>
-                                        <div style={{ fontSize: "18px", fontWeight: 800, marginBottom: "8px" }}>PS Wallet Balance</div>
-                                        <div style={{ fontSize: "36px", fontWeight: 900, color: "#0090ff", marginBottom: "6px" }}>₹2,340</div>
+                                        <div style={{ fontSize: "18px", fontWeight: 800, marginBottom: "8px" }}>Demo Wallet Balance</div>
+                                        <div style={{ fontSize: "36px", fontWeight: 900, color: "#0090ff", marginBottom: "6px" }}>₹2,340 (demo)</div>
                                         <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: "24px" }}>
-                                            Sufficient balance for this purchase
+                                            Displayed balance only; not connected to an account.
                                         </p>
                                         <button onClick={handlePay} style={{
                                             width: "100%", padding: "14px",
@@ -384,7 +384,7 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                                             cursor: "pointer", color: "#fff", fontWeight: 700, fontSize: "15px",
                                             boxShadow: "0 6px 20px rgba(0,112,209,0.4)", transition: "all 0.2s",
                                         }}>
-                                            Pay from Wallet
+                                            Use Demo Wallet
                                         </button>
                                     </div>
                                 ) : (
@@ -484,10 +484,10 @@ const PaymentModal = ({ game, onClose, mode = "purchase" }) => {
                                                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                                         style={{ width: "18px", height: "18px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }}
                                                     />
-                                                    Processing...
+                                                    Simulating demo checkout…
                                                 </>
                                             ) : (
-                                                <><LockIcon /> Pay Securely</>
+                                                <>Complete Demo Checkout</>
                                             )}
                                         </button>
 

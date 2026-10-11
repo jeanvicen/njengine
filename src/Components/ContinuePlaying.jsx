@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Clock, Play } from "lucide-react";
 import { continuePlayingGames } from "../data/mockData.js";
 import LogoImage from "./LogoImage.jsx";
@@ -26,22 +27,25 @@ const ContinuePlaying = () => {
             Continue Playing
           </h2>
         </div>
-        <a
-          href="#"
+        <Link
+          to="/library"
           style={{ color: "#0070d1", fontSize: "12px", textDecoration: "none", fontWeight: 500 }}
           onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
           onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
         >
           View All
-        </a>
+        </Link>
       </div>
 
       {/* Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
         {continuePlayingGames.map((game) => (
-          <div
+          <Link
             key={game.id}
+            to="/library"
             style={{
+              display: "block",
+              textDecoration: "none",
               background: "rgba(10,14,26,0.6)",
               backdropFilter: "blur(16px)",
               WebkitBackdropFilter: "blur(16px)",
@@ -149,7 +153,7 @@ const ContinuePlaying = () => {
                 }} />
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

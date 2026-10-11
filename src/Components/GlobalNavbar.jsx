@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { SearchIcon, Bell, Settings } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { SearchIcon } from "lucide-react";
 import { userProfile } from "../data/mockData.js";
 import { QRCodeSVG } from "qrcode.react";
 import { useDualSenseWS } from "./Anikator/useDualSenseWS";
@@ -24,9 +24,17 @@ const PSLogoSVG = () => (
 
 const GlobalNavbar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const currentPath = location.pathname;
-    const { session } = useDualSenseWS();
+    const { session, connected, status } = useDualSenseWS();
     const [showQR, setShowQR] = useState(false);
+    const controllerStatusMessage = connected
+        ? "Phone controller connected."
+        : ({
+            unavailable: "Controller signaling is unavailable. Check the deployed database connection and use a secure browser context.",
+            "connection-failed": "Direct pairing failed. Try another network; a TURN fallback is not configured.",
+            waiting: "Scan with your phone and keep both screens online. Some network or firewall setups may block direct pairing.",
+        }[status] || "Preparing the controller connection…");
 
     const navItems = [
         { label: "Games", path: "/home" },
@@ -126,8 +134,14 @@ const GlobalNavbar = () => {
                     Connect Phone
                 </button>
 
-                <SearchIcon size={20} style={{ color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "all 0.3s" }} />
-                <Settings size={20} style={{ color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "all 0.3s" }} />
+                <button
+                    type="button"
+                    aria-label="Open game library"
+                    onClick={() => navigate("/library")}
+                    style={{ background: "none", border: "none", padding: "8px", color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "all 0.3s" }}
+                >
+                    <SearchIcon size={20} />
+                </button>
 
                 {/* User Avatar */}
                 <Link to="/profile" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}>
@@ -181,10 +195,10 @@ const GlobalNavbar = () => {
                             />
                         </div>
                         <p style={{ color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>
-                            Session ID: <span style={{ color: "white", fontFamily: "monospace", letterSpacing: "2px" }}>{session}</span>
+                            Session ID: <span style={{ color: "white", fontFamily: "monospace", letterSpacing: "2px", wordBreak: "break-all" }}>{session}</span>
                         </p>
-                        <p style={{ color: "rgba(255,255,255,0.55)", marginTop: "8px", maxWidth: "320px", textAlign: "center", fontSize: "13px", lineHeight: 1.5 }}>
-                            Cross-device control needs the upstream WebSocket relay, which is not available in this Vercel deployment.
+                        <p role="status" aria-live="polite" style={{ color: "rgba(255,255,255,0.55)", marginTop: "8px", maxWidth: "320px", textAlign: "center", fontSize: "13px", lineHeight: 1.5 }}>
+                            {controllerStatusMessage}
                         </p>
                         <button
                             onClick={() => setShowQR(false)}

@@ -4,7 +4,15 @@ import { useDualSenseWS } from './useDualSenseWS';
 import { Joystick } from './Joystick';
 
 export default function ControllerInterface() {
-    const { sendAction, sendJoystick, connected } = useDualSenseWS();
+    const { sendAction, sendJoystick, connected, status } = useDualSenseWS();
+    const connectionColor = connected ? '#00e676' : status === 'unavailable' || status === 'connection-failed' ? '#ff5252' : '#ffb74d';
+    const connectionLabel = connected
+        ? 'DUALSENSE CONNECTED'
+        : ({
+            unavailable: 'REMOTE RELAY UNAVAILABLE',
+            'connection-failed': 'DIRECT CONNECTION FAILED',
+            waiting: 'WAITING FOR CONSOLE',
+        }[status] || 'CONNECTING TO RELAY');
     const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
     const [leftActive, setLeftActive] = useState(false);
     const [rightActive, setRightActive] = useState(false);
@@ -284,15 +292,15 @@ export default function ControllerInterface() {
                     }}>
                         <div style={{
                             width: '8px', height: '8px', borderRadius: '50%',
-                            background: '#00e676',
-                            boxShadow: '0 0 8px #00e676',
+                            background: connectionColor,
+                            boxShadow: `0 0 8px ${connectionColor}`,
                         }} />
                         <span style={{
                             fontSize: '11px', fontWeight: 600,
                             color: 'rgba(255,255,255,0.5)',
                             letterSpacing: '1.5px',
                         }}>
-                            {connected ? 'DUALSENSE CONNECTED' : 'REMOTE RELAY UNAVAILABLE'}
+                            {connectionLabel}
                         </span>
                     </div>
 
