@@ -122,6 +122,14 @@ button:disabled{opacity:.4;cursor:default}
 .hints kbd{font:inherit;color:#eee;border:1px solid #c9972b66;border-radius:5px;padding:0 6px;margin-right:5px}
 #toast{position:fixed;left:50%;bottom:60px;transform:translate(-50%,20px);z-index:40;background:#000d;border:1px solid var(--g2);padding:8px 18px;border-radius:999px;font-size:12px;opacity:0;transition:all .5s var(--e);pointer-events:none;backdrop-filter:blur(8px);max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+#gameView{position:fixed;inset:0;z-index:35;display:none;flex-direction:column;background:#050403}
+#gameView.on{display:flex}
+#gameBar{height:54px;flex:none;display:flex;align-items:center;gap:14px;padding:8px 16px;background:linear-gradient(90deg,#100d07,#050403);border-bottom:1px solid #c9972b66}
+#gameBack{flex:none;color:#f6e27a;padding:7px 13px}
+#gameLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px Cinzel,Georgia,serif;letter-spacing:.12em}
+#gameHint{margin-left:auto;color:#9b927c;font-size:11px;white-space:nowrap}
+#gameFrame{display:block;flex:1;width:100%;height:calc(100% - 54px);border:0;background:#000}
+@media(max-width:560px){#gameBar{height:48px;padding:6px 9px;gap:9px}#gameHint{display:none}#gameFrame{height:calc(100% - 48px)}}
 @media (max-height:430px){#desc{display:none}.top{padding:5px 14px}#info{padding:7px 14px;margin-bottom:5px}.hub{font-size:16px}}
 @media (pointer:coarse){.hints{display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
@@ -142,13 +150,17 @@ button:disabled{opacity:.4;cursor:default}
  <footer class="hints" id="hints"><span><kbd>↑</kbd><kbd>↓</kbd>Menus</span><span><kbd>←</kbd><kbd>→</kbd>Navegar</span><span><kbd>Enter</kbd>Selecionar</span></footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<section id="gameView" aria-label="Jogo em execução" aria-hidden="true">
+ <div id="gameBar"><button id="gameBack" type="button">← VOLTAR AO CONSOLE</button><strong id="gameLabel">DRIFIN SLOT</strong><span id="gameHint">O jogo está rodando dentro do NJENGINE</span></div>
+ <iframe id="gameFrame" title="Drifin Slot" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-read; clipboard-write; screen-wake-lock" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</section>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 const lite=matchMedia('(pointer:coarse)').matches||innerWidth<900,RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
-/* DADOS: defina window.NJ_GAMES=[{title,genre,desc,img?}] antes deste script. Sem isso, usa os 5 jogos de exemplo. */
-const DEMO=[{title:'Aurum Chronicles',genre:'RPG',desc:'Uma jornada épica por reinos dourados e ruínas esquecidas.'},{title:'Obsidian Drift',genre:'Corrida',desc:'Velocidade extrema em pistas de vidro negro.'},{title:'Last Meridian',genre:'Aventura',desc:'Explore o último território ainda sem mapa.'},{title:'Gilded Arena',genre:'Ação',desc:'Duelos intensos em uma arena de ouro e sombra.'},{title:'Silent Vault',genre:'Puzzle',desc:'Abra o cofre antes que o silêncio acabe.'}];
-const GAMES=(window.NJ_GAMES&&window.NJ_GAMES.length)?window.NJ_GAMES:DEMO;
+/* Catálogo inicial: o jogo remoto só aparece na aba Jogos; não é aberto antes de entrar na Biblioteca. */
+const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Corrida em paisagem: faça drift na Coast Highway e acumule combos.',url:'https://car-pend.vercel.app/'}];
+const GAMES=(window.NJ_GAMES&&window.NJ_GAMES.length)?window.NJ_GAMES:CATALOG;
 const HUBS=['Jogos','Biblioteca','Sistema'];
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let hs=0,pos=0,drag=null,moved=false,busy=false,failed='',lib=store.get('nj_lib',[]),sound=true,ac,bus,master;
@@ -201,24 +213,26 @@ const cur=()=>items()[Math.round(pos)];
 function info(){const g=cur();if(!busy)$('genre').textContent=g?(g.genre||''):'';$('title').textContent=g?g.title:(hs===1?'Biblioteca vazia':'Nenhum jogo disponível');
  $('desc').textContent=g?(g.desc||''):(hs===1?'Adicione jogos pela aba Jogos para vê-los aqui.':'');btn()}
 function btn(){const g=cur(),b=$('play');let t='JOGAR',d=!g;
- if(g&&hs===0){t=inLib(g)?'NA BIBLIOTECA':(failed===g.title?'TENTAR NOVAMENTE':'ADICIONAR À BIBLIOTECA');d=inLib(g)}
+ if(g&&hs===0){t=inLib(g)?'NA BIBLIOTECA':'ENVIAR PARA BIBLIOTECA';d=inLib(g)}
+ if(g&&hs===1){t='JOGAR';d=false}
  if(busy){t='ENVIANDO…';d=true}b.textContent=t;b.disabled=d}
 function play(){const g=cur();if(!g||busy)return;if(hs===0){if(!inLib(g))addLib(g);return}
- sel();toast('Iniciando '+g.title+'…');dispatchEvent(new CustomEvent('njengine:play',{detail:g}))}
-/* Simulação de envio à biblioteca (demonstração): ~6 s, 35% de chance de falha */
-const ERRS=[['NJ-10786-3','Conexão de rede interrompida'],['NJ-20408-1','Tempo de resposta esgotado (HTTP 408)'],['NJ-10787-2','Espaço insuficiente no armazenamento'],['NJ-10752-2','Falha na verificação de integridade dos arquivos'],['NJ-21374-0','Serviço temporariamente indisponível. Tente novamente mais tarde.']];
+ if(hs===1&&inLib(g)){launchGame(g);return}sel();toast('Adicione o jogo à biblioteca para jogar.')}
+function launchGame(g){if(!g||!g.url)return;sel();$('gameLabel').textContent=g.title.toUpperCase();$('gameFrame').title=g.title;$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');$('gameFrame').src=g.url;document.body.style.overflow='hidden'}
+function closeGame(){const frame=$('gameFrame');frame.src='about:blank';$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);toast('De volta ao NJENGINE')}
+$('gameBack').onclick=closeGame;
+/* O envio salva o título na biblioteca local deste navegador; não depende de servidor externo. */
 function addLib(g){busy=true;btn();tick();
- const MSG=['Conectando ao servidor…','Enviando para a sua biblioteca…','Verificando arquivos…','Sincronizando biblioteca…'];
+ const MSG=['Preparando o jogo…','Adicionando à sua biblioteca…','Concluindo…'];
  const tile=row.querySelector('.tile.focus'),face=tile&&tile.querySelector('.face'),ov=document.createElement('div');ov.className='up';ov.innerHTML=disc+'<span></span>';if(face)face.appendChild(ov);
- const bar=$('bar'),fill=bar.firstChild,fail=Math.random()<.36,stop=fail?40+Math.random()*45:100;let p=0,n=0;bar.className='on';fill.style.width='0';
- const iv=setInterval(()=>{p=Math.min(stop,p+Math.random()*7+3);fill.style.width=p+'%';const m=MSG[Math.min(3,Math.floor(p/26))];ov.lastChild.textContent=m+' '+Math.floor(p)+'%';$('genre').textContent=m;
+ const progressBar=$('bar'),fill=progressBar.firstChild;let p=0,n=0;progressBar.className='on';fill.style.width='0';
+ const iv=setInterval(()=>{p=Math.min(100,p+22);fill.style.width=p+'%';const m=MSG[Math.min(2,Math.floor(p/36))];ov.lastChild.textContent=m+' '+Math.floor(p)+'%';$('genre').textContent=m;
   if(Math.floor(p/25)>n){n=Math.floor(p/25);tick()}
-  if(p>=stop){clearInterval(iv);setTimeout(()=>done(!fail),fail?900:500)}},420);
- function done(ok){if(ok){fill.style.width='100%';lib.push(g.title);store.set('nj_lib',lib);failed='';ov.className='up';ov.innerHTML='<span>✓ Adicionado</span>';sel();
+  if(p>=100){clearInterval(iv);setTimeout(done,250)}},100);
+ function done(){fill.style.width='100%';if(!inLib(g))lib.push(g.title);store.set('nj_lib',lib);ov.className='up';ov.innerHTML='<span>✓ Adicionado</span>';sel();
    if(face)face.insertAdjacentHTML('beforeend','<i class="bd">✓</i>');fly(tile);
-   setTimeout(()=>{ov.remove();bar.className='';busy=false;info()},1000)}
-  else{failed=g.title;bar.className='on fail';ov.className='up fail';const E=ERRS[Math.floor(Math.random()*ERRS.length)];ov.lastChild.innerHTML='Falha ao enviar ('+Math.floor(p)+'%)<br><small>'+E[1]+'<br>Código '+E[0]+'</small>';bad();toast('Erro '+E[0]+' · '+E[1]);
-   setTimeout(()=>{ov.remove();bar.className='';busy=false;info()},3400)}}}
+   setTimeout(()=>{ov.remove();progressBar.className='';busy=false;info();build();hubs()},800)}
+}
 /* o card voa em 3D até o menu Biblioteca */
 function fly(tile){const hb=$('hubs').children[1];if(!tile||!hb||RM){hubs();toast('Adicionado à biblioteca');return}
  const loc=el=>{const r=el.getBoundingClientRect();return rot?{left:r.top,top:innerWidth-r.right,width:r.height,height:r.width}:r},a=loc(tile),b=loc(hb),c=tile.cloneNode(true);c.querySelectorAll('.up').forEach(x=>x.remove());
@@ -235,7 +249,8 @@ function end(e){if(!drag)return;const q=P(e),dy=q.y-drag.y,dx=q.x-drag.x,v=drag.
 row.onpointerup=end;row.onpointercancel=end;
 row.onpointerleave=()=>{const f=row.querySelector('.tile.focus');if(f){f.style.setProperty('--tx','0deg');f.style.setProperty('--ty','0deg')}};
 let lw=0;row.addEventListener('wheel',e=>{e.preventDefault();const n=performance.now();if(n-lw<320)return;lw=n;goTo(Math.round(pos)+Math.sign(e.deltaX||e.deltaY))},{passive:false});
-addEventListener('keydown',e=>{if(!$('app').classList.contains('on'))return;const onCtl=e.target.closest&&e.target.closest('button,.tile');
+ addEventListener('keydown',e=>{if(!$('app').classList.contains('on'))return;const onCtl=e.target.closest&&e.target.closest('button,.tile');
+ if($('gameView').classList.contains('on')){if(e.key==='Escape'){e.preventDefault();closeGame()}return}
  if(e.key==='ArrowDown')setHub(hs+1);else if(e.key==='ArrowUp')setHub(hs-1);else if(e.key==='ArrowRight')goTo(Math.round(pos)+1);else if(e.key==='ArrowLeft')goTo(Math.round(pos)-1);
  else if((e.key==='Enter'||e.key===' ')&&!onCtl){e.preventDefault();play()}});
 $('play').onclick=play;
