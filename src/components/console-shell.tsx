@@ -68,8 +68,8 @@ export function ConsoleShell() {
     return map;
   }, [games]);
   const railItems: RailItem[] = useMemo(() => {
-    if (hub === 0) return games.length ? games : [null];
-    if (hub === 1) return slots;
+    if (hub === 0) return slots;
+    if (hub === 1) return games.length ? games : [null];
     return [];
   }, [hub, games, slots]);
   const firstFree = slots.find((slot) => !isFilled(slot)) ?? null;
@@ -77,7 +77,8 @@ export function ConsoleShell() {
   const safePosition = clamp(position, 0, maxPosition);
   const activeIndex = clamp(Math.round(safePosition), 0, maxPosition);
   const currentItem = railItems[activeIndex] ?? null;
-  const currentSlot = currentItem ?? (hub === 0 ? firstFree : null);
+  const currentSlot = currentItem ?? (hub !== 2 ? firstFree : null);
+  const libraryEmpty = hub === 1 && games.length === 0;
   const currentFilled = Boolean(currentSlot && isFilled(currentSlot));
   const currentPlayUrl = currentFilled && currentSlot ? safeHttpUrl(currentSlot.playUrl) : "";
   const currentMeta = currentSlot
@@ -453,6 +454,10 @@ export function ConsoleShell() {
       toggleMute();
       return;
     }
+    if (libraryEmpty) {
+      changeHub(-1);
+      return;
+    }
     activateSlot(currentSlot);
   }
 
@@ -465,6 +470,10 @@ export function ConsoleShell() {
       setPosition(index);
       positionRef.current = index;
       playTick();
+      return;
+    }
+    if (libraryEmpty) {
+      changeHub(-1);
       return;
     }
     activateSlot(item ?? firstFree);
@@ -556,25 +565,31 @@ export function ConsoleShell() {
     : ["↑ ↓ Menus", "← → Navegar", "Enter Selecionar"];
   const title = hub === 2
     ? "Sistema"
-    : currentFilled && currentSlot
-      ? slotTitle(currentSlot)
-      : currentSlot
-        ? `Baia ${currentSlot.bay} · livre`
-        : "Biblioteca vazia";
+    : libraryEmpty
+      ? "Biblioteca vazia"
+      : currentFilled && currentSlot
+        ? slotTitle(currentSlot)
+        : currentSlot
+          ? `Baia ${currentSlot.bay} · livre`
+          : "Biblioteca vazia";
   const genre = hub === 2
     ? "NJENGINE"
-    : currentFilled && currentSlot
-      ? currentSlot.genre.trim() || currentMeta || "JOGO DA BIBLIOTECA"
-      : currentSlot
-        ? `BAIA ${currentSlot.bay} · ESPAÇO LIVRE`
-        : "SEM JOGOS CADASTRADOS";
+    : libraryEmpty
+      ? "SEM JOGOS CADASTRADOS"
+      : currentFilled && currentSlot
+        ? currentSlot.genre.trim() || currentMeta || "JOGO DA BIBLIOTECA"
+        : currentSlot
+          ? `BAIA ${currentSlot.bay} · ESPAÇO LIVRE`
+          : "SEM JOGOS CADASTRADOS";
   const description = hub === 2
     ? "Informações reais deste aparelho e da biblioteca local."
-    : currentFilled && currentSlot
-      ? currentSlot.description.trim() || currentMeta || "Jogo cadastrado nesta biblioteca."
-      : currentSlot
-        ? "Este espaço fica reservado para um jogo seu. Abra a ficha para adicionar título, capa e link."
-        : "Sua biblioteca está pronta. Adicione seu primeiro jogo quando quiser.";
+    : libraryEmpty
+      ? "Adicione jogos pela aba Jogos para vê-los aqui."
+      : currentFilled && currentSlot
+        ? currentSlot.description.trim() || currentMeta || "Jogo cadastrado nesta biblioteca."
+        : currentSlot
+          ? "Este espaço fica reservado para um jogo seu. Abra a ficha para adicionar título, capa e link."
+          : "Adicione seus jogos pela aba Jogos para vê-los aqui.";
 
   const railPointerProps = {
     onPointerDown: onRailPointerDown,
@@ -685,17 +700,15 @@ export function ConsoleShell() {
                   opacity: Math.max(0.25, blend + 0.3),
                   zIndex: Math.round(100 - distance * 10),
                 };
-                const cardTitle = filled ? slotTitle(slot) : `BAIA ${slot.bay}`;
-                const cardDescription = filled
-                  ? [slot.genre.trim(), slot.platform.trim()].filter(Boolean).join(" · ")
-                  : "ESPAÇO LIVRE";
+                const libraryPlaceholder = hub === 1 && item === null;
+                const cardTitle = libraryPlaceholder ? "Biblioteca vazia" : filled ? slotTitle(slot) : `BAIA ${slot.bay}`;
                 return (
                   <button
                     key={slot.id}
                     type="button"
                     className={`nj-console-card ${focus ? "is-focused" : ""} ${filled ? "" : "is-empty"}`}
                     style={cardStyle}
-                    aria-label={filled ? `${cardTitle}${focus ? ", selecionado" : ", selecionar"}` : `Baia ${slot.bay}, espaço livre${focus ? ", selecionada" : ", selecionar"}`}
+                    aria-label={libraryPlaceholder ? "Biblioteca vazia. Vá para Jogos para adicionar seus jogos." : filled ? `${cardTitle}${focus ? ", selecionado" : ", selecionar"}` : `Baia ${slot.bay}, espaço livre${focus ? ", selecionada" : ", selecionar"}`}
                     aria-pressed={focus}
                     onClick={() => handleCardClick(item, index)}
                   >
@@ -705,11 +718,12 @@ export function ConsoleShell() {
                       ) : (
                         <span className="nj-console-empty-art">
                           <span className="nj-console-disc"><i /></span>
-                          <span className="nj-console-empty-label">BAIA {slot.bay}</span>
-                          <span className="nj-console-empty-status">LIVRE</span>
+                          <span className="nj-console-empty-label">{libraryPlaceholder ? "BIBLIOTECA" : `BAIA ${slot.bay}`}</span>
+                          <span className="nj-console-empty-status">{libraryPlaceholder ? "VAZIA" : "LIVRE"}</span>
                         </span>
                       )}
                       {filled && <span className="nj-console-caption">{cardTitle}</span>}
+                      {hub === 0 && filled && <span className="nj-console-library-check" aria-label="Cadastrado na biblioteca">✓</span>}
                     </span>
                   </button>
                 );
@@ -728,8 +742,14 @@ export function ConsoleShell() {
                     <span>JOGAR</span><Play aria-hidden="true" />
                   </a>
                 ) : (
-                  <button id="nj-console-play" type="button" disabled={!currentSlot || !ready} onClick={() => currentSlot && setSelectedId(currentSlot.id)}>
-                    <span>{currentFilled ? "EDITAR FICHA" : "ADICIONAR JOGO"}</span>{currentFilled ? <Play aria-hidden="true" /> : <span className="nj-console-plus">+</span>}
+                  <button
+                    id="nj-console-play"
+                    type="button"
+                    disabled={!ready || (!currentSlot && !libraryEmpty)}
+                    onClick={() => libraryEmpty ? changeHub(-1) : currentSlot && setSelectedId(currentSlot.id)}
+                  >
+                    <span>{libraryEmpty ? "IR PARA JOGOS" : currentFilled ? "EDITAR FICHA" : "ADICIONAR JOGO"}</span>
+                    {libraryEmpty ? <span className="nj-console-plus">←</span> : currentFilled ? <Play aria-hidden="true" /> : <span className="nj-console-plus">+</span>}
                   </button>
                 )}
               </div>

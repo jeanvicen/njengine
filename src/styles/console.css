@@ -90,6 +90,7 @@
 .nj-console-empty-label { color: var(--nj-g1); font: 700 12px Cinzel, Georgia, serif; letter-spacing: .14em; }
 .nj-console-empty-status { color: #9f9069; font-size: 9px; letter-spacing: .25em; }
 .nj-console-caption { position: absolute; z-index: 4; right: 0; bottom: 0; left: 0; overflow: hidden; padding: 30px 10px 9px; color: #f2efe8; background: linear-gradient(transparent, #000f); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-overflow: ellipsis; white-space: nowrap; }
+.nj-console-library-check { position: absolute; z-index: 5; top: 8px; right: 8px; display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #fff3b077; border-radius: 50%; color: #1a1204; background: var(--nj-gold); box-shadow: 0 0 12px #c9972b; font: 700 12px/1 Manrope, sans-serif; }
 .nj-console-system { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 22px; color: #cfc8b6; background: radial-gradient(circle at 50% 42%, #1b1508aa, #030303eF 66%); text-align: left; }
 .nj-console-system h2 { margin: 0 0 4px; font: 700 15px Cinzel, Georgia, serif; letter-spacing: .15em; }
 .nj-console-system > p { margin: 0 0 4px; font-size: 13px; }
