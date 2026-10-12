@@ -163,6 +163,7 @@ button:disabled{opacity:.4;cursor:default}
  <footer class="hints" id="hints"><span><kbd>↑</kbd><kbd>↓</kbd>Menus</span><span><kbd>←</kbd><kbd>→</kbd>Navegar</span><span><kbd>Enter</kbd>Selecionar</span></footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<audio id="bootAudio" src="/sounds/njengine-boot.mp3" preload="auto" aria-hidden="true"></audio>
 <section id="gameView" aria-label="Jogo em execução" aria-hidden="true">
  <!-- Tela cheia intencionalmente bloqueada: evita o aviso de sair do fullscreen e mantém o botão do console acessível em qualquer jogo. -->
  <iframe id="gameFrame" title="Drifin Slot" allow="autoplay; gamepad; accelerometer; gyroscope; clipboard-read; clipboard-write; screen-wake-lock" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -190,12 +191,11 @@ function aInit(){try{if(!ac){ac=new(window.AudioContext||window.webkitAudioConte
  const L=ac.sampleRate*2.2,b=ac.createBuffer(2,L,ac.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<L;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/L,3)}
  const rv=ac.createConvolver();rv.buffer=b;const rg=ac.createGain();rg.gain.value=.3;rv.connect(rg).connect(master);bus=ac.createGain();bus.connect(master);bus.connect(rv)}
  if(ac.state==='suspended')ac.resume()}catch(e){ac=null}}
+let bootSoundStarted=false;
+function startBootSound(){const boot=$('boot'),audio=$('bootAudio');if(bootSoundStarted||!boot||boot.classList.contains('hide')||!audio)return;bootSoundStarted=true;audio.volume=.7;const p=audio.play();if(p&&p.catch)p.catch(()=>{bootSoundStarted=false})}
 let tried=false;
 function lockLandscape(){if(tried||!matchMedia('(pointer:coarse)').matches)return;tried=true;try{const d=document.documentElement;if(d.requestFullscreen)d.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape')).catch(()=>{})}catch(e){}}
-let swellOK=true,swelled=false;
-function trySwell(){if(swellOK&&!swelled&&ac&&ac.state==='running'){swelled=true;cue('swell')}}
-function unlocked(){trySwell()}
-function unlock(e){aInit();if(e&&e.type!=='pointerdown')lockLandscape();if(!ac)return;if(ac.state==='running')unlocked();else ac.resume().then(()=>{if(ac.state==='running')unlocked()}).catch(()=>{})}
+function unlock(e){if(e&&e.isTrusted)startBootSound();aInit();if(e&&e.type!=='pointerdown')lockLandscape();if(!ac)return;if(ac.state!=='running')ac.resume().catch(()=>{})}
 ['pointerdown','pointerup','touchend','click','keydown'].forEach(ev=>addEventListener(ev,unlock,{passive:true}));
 /* o console é horizontal: em tela vertical (toque), o palco gira 90° sozinho, sem aviso */
 const mqP=matchMedia('(orientation:portrait)'),mqC=matchMedia('(pointer:coarse)');let rot=false;
@@ -204,7 +204,7 @@ if(mqP.addEventListener)mqP.addEventListener('change',setRot);
 const P=e=>rot?{x:e.clientY,y:innerWidth-e.clientX}:{x:e.clientX,y:e.clientY};
 function tone(f,d,t,v,dl=0,at=.006){if(!ac||!sound||ac.state!=='running')return;try{const s=ac.currentTime+dl,o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(v,s+at);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g).connect(bus);o.start(s);o.stop(s+d+.05)}catch(e){}}
 const ting=(f,v=.06,dl=0)=>[1,2,3].forEach((m,i)=>tone(f*m,1.4/(i+1),'sine',v/(i*1.5+1),dl));
-const tick=()=>{tone(1760,.12,'sine',.03);tone(2640,.08,'sine',.012,.01)},sel=()=>{[659,988].forEach((f,i)=>ting(f,.07,i*.09));tone(165,.5,'sine',.1)},bad=()=>{tone(196,.5,'sine',.1);tone(147,.8,'sine',.1,.15)};
+const tick=()=>{tone(1760,.12,'sine',.03);tone(2640,.08,'sine',.012,.01)},sel=()=>{[659,988].forEach((f,i)=>ting(f,.07,i*.09));tone(165,.5,'sine',.1)};
 /* menus verticais */
 function hubs(){const n=$('hubs'),S=lite?46:68;if(!n.children.length)HUBS.forEach((h,i)=>{const b=document.createElement('button');b.className='hub';b.onclick=()=>setHub(i);n.appendChild(b)});
  [...n.children].forEach((b,i)=>{const d=i-hs;b.innerHTML=HUBS[i]+(i===1&&lib.length?`<sup>${lib.length}</sup>`:'');b.style.transform=`translateY(calc(-50% + ${d*S}px)) scale(${1-.3*Math.abs(d)})`;b.style.opacity=1-.55*Math.abs(d);b.classList.toggle('sel',d===0);b.setAttribute('aria-current',d===0)})}
@@ -285,38 +285,26 @@ function conn(){const o=navigator.onLine;$('conn').innerHTML=`<i class="dot ${o?
 addEventListener('online',conn);addEventListener('offline',conn);
 /* ABERTURA (~20 s): ponto de luz, linha de ouro, diagnóstico do sistema (50% de chance de erro simulado + recuperação), clarão e logo. O áudio só toca depois do primeiro toque/tecla. */
 let ended=false;const wait=ms=>new Promise((res,rej)=>setTimeout(()=>ended?rej():res(),ms));
-function reveal(){if(ended)return;ended=true;clearInterval(mus);$('flash').style.opacity=1;setTimeout(()=>{$('flash').style.opacity=0;$('boot').classList.add('hide');$('app').classList.add('on');hubs();build();setTimeout(()=>$('boot').remove(),1500)},450)}
-/* sons da abertura: tudo sintetizado; só toca com o áudio já liberado pelo primeiro toque/tecla */
-function sweep(f1,f2,d,v){if(!ac||!sound||ac.state!=='running')return;try{const s=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(f1,s);o.frequency.exponentialRampToValueAtTime(f2,s+d);g.gain.setValueAtTime(.0001,s);g.gain.linearRampToValueAtTime(v,s+d*.8);g.gain.exponentialRampToValueAtTime(.0001,s+d+.3);o.connect(g).connect(bus);o.start(s);o.stop(s+d+.4)}catch(e){}}
-const key=()=>tone(2600+Math.random()*500,.025,'square',.006);
-const beep=()=>{tone(1319,.1,'sine',.04);tone(1760,.14,'sine',.04,.08)};
-const buzz=()=>{tone(110,.35,'sawtooth',.06);for(let i=0;i<7;i++)tone(300+Math.random()*1800,.04,'square',.025,i*.045)};
-const fixd=()=>[880,1109,1319,1760].forEach((f,i)=>tone(f,.12,'sine',.045,i*.09));
-/* música: arpejo em loop (acordes D, Bm, G, A) que ganha brilho ao longo da abertura */
-const CH=[[146.8,185,220,277.2],[123.5,146.8,185,246.9],[98,123.5,146.8,196],[110,138.6,164.8,220]];let bar=0,mus=null,inten=0;
-function bars(){const c=CH[bar++%4];c.forEach((f,i)=>tone(f/2,3.2,'sine',.05,i*.05,.9));for(let i=0;i<8;i++)ting(c[i%4]*(i>3?4:2),.03+inten*.01,i*.3);if(inten>1)ting(c[bar%4]*8,.02,1.2)}
-function cue(n){if(n==='swell')[73.4,110,146.8,185].forEach((f,i)=>tone(f,10,'sine',.05,i*.3,4));
- else if(n==='rise')sweep(120,1800,2.8,.07);
- else if(n==='hit'){tone(55,4.5,'sine',.32,0,.04);tone(110,3,'triangle',.08,0,.04);[880,1319,1760,2349].forEach((f,i)=>ting(f,.08,i*.1))}}
+function reveal(){if(ended)return;ended=true;$('flash').style.opacity=1;setTimeout(()=>{$('flash').style.opacity=0;$('boot').classList.add('hide');$('app').classList.add('on');hubs();build();setTimeout(()=>$('boot').remove(),1500)},450)}
+/* Os sons da abertura usam um arquivo original; os sintetizadores continuam reservados aos controles do menu. */
 async function line(T,txt,st,cls,ms){const d=document.createElement('div');T.appendChild(d);d.textContent='['+(performance.now()/1000).toFixed(3).padStart(8)+'] ';requestAnimationFrame(()=>d.classList.add('on'));
- for(let i=0;i<txt.length;i++){d.textContent+=txt[i];if(i%2===0)key();await wait(30)}
+ for(let i=0;i<txt.length;i++){d.textContent+=txt[i];await wait(30)}
  for(let i=0;i<6;i++){d.textContent+='.';await wait(70)}
- await wait(ms);const s=document.createElement('b');s.textContent=' '+st;s.className=cls;d.appendChild(s);if(cls==='ok')beep()}
+ await wait(ms);const s=document.createElement('b');s.textContent=' '+st;s.className=cls;d.appendChild(s)}
 async function intro(){const B=$('boot'),T=$('term'),D=$('dust');aInit();
  for(let i=0;i<36;i++){const e=document.createElement('i'),z=Math.random()*3+1;e.style.cssText=`left:${Math.random()*100}%;top:${40+Math.random()*60}%;width:${z}px;height:${z}px;animation-duration:${6+Math.random()*8}s;animation-delay:${-Math.random()*10}s`;D.appendChild(e)}
- mus=setInterval(()=>{if(ac&&ac.state==='running'&&sound)bars()},2400);
- try{await wait(500);B.classList.add('go');trySwell();await wait(4200);
-  swellOK=false;await line(T,'NJ-CORE 1.0 boot','pronto','ok',300);
+ try{await wait(500);B.classList.add('go');await wait(4200);
+  await line(T,'NJ-CORE 1.0 boot','pronto','ok',300);
   await line(T,'Initializing graphics core','ok','ok',500);
   const bootFail=Math.random()<.35,which=Math.floor(Math.random()*2);
-  if(bootFail&&which===0){const pc=40+Math.floor(Math.random()*45);await line(T,'Syncing library','falhou em '+pc+'% (E_TIMEOUT 0x80072EE2)','wr',900);bad();await line(T,'Retrying sync (1/3)','ok','ok',1400)}
+  if(bootFail&&which===0){const pc=40+Math.floor(Math.random()*45);await line(T,'Syncing library','falhou em '+pc+'% (E_TIMEOUT 0x80072EE2)','wr',900);await line(T,'Retrying sync (1/3)','ok','ok',1400)}
   else await line(T,'Syncing library','ok','ok',500);
   await line(T,'Checking memory','ok','ok',500);
-  if(bootFail&&which===1){const pc=55+Math.floor(Math.random()*35);await line(T,'Optimizing renderer','aviso em '+pc+'% (shader cache 0xC0000185)','wr',900);bad();await line(T,'Rebuilding shader cache','ok','ok',1500)}
+  if(bootFail&&which===1){const pc=55+Math.floor(Math.random()*35);await line(T,'Optimizing renderer','aviso em '+pc+'% (shader cache 0xC0000185)','wr',900);await line(T,'Rebuilding shader cache','ok','ok',1500)}
   else await line(T,'Optimizing renderer','ok','ok',500);
-  await wait(1000);inten=1;B.classList.add('lit','open');cue('rise');await wait(2800);inten=2;
+  await wait(1000);B.classList.add('lit','open');await wait(2800);
   const rv=$('reveal');[...'NJENGINE'].forEach((c,i)=>{const s=document.createElement('span');s.textContent=c;rv.appendChild(s);setTimeout(()=>s.classList.add('in'),i*260)});
-  await wait(3400);cue('hit');rv.classList.add('sh');$('sub').classList.add('in');await wait(5200);reveal()}catch(e){}}
+  await wait(3400);rv.classList.add('sh');$('sub').classList.add('in');await wait(5200);reveal()}catch(e){}}
 addEventListener('resize',setRot);
 setRot();clk();setInterval(clk,15000);conn();intro();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
