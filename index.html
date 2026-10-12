@@ -112,7 +112,7 @@ button:disabled{opacity:.4;cursor:default}
 #app.on #info{animation:inb 1.2s 1s var(--e) both}
 @keyframes inb{from{opacity:0;translate:0 30px}}
 #genre{font-size:11px;letter-spacing:.2em;color:var(--g2);min-height:1.2em}
-#title{font-size:clamp(15px,2.6vw,26px);font-weight:700;margin:3px 0;letter-spacing:.08em}
+#title{font:600 clamp(13px,1.6vw,16px)/1.45 Manrope,system-ui,sans-serif;margin:6px 0 0;letter-spacing:0;max-width:64ch}
 #desc{color:#b9b2a0;font-size:12px;line-height:1.5;max-width:46ch}
 #play{position:relative;flex:none;border:0;min-height:40px;padding:10px 22px;font-weight:700;font-size:12px;letter-spacing:.1em;white-space:nowrap;color:#1a1204;background:var(--gold);background-size:220% 100%;box-shadow:0 0 22px #c9972b66,inset 0 -3px 5px #6b4a1299,inset 0 2px 2px #fff9;overflow:hidden;transition:background-position .9s var(--e),box-shadow .5s,transform .2s}
 #play:hover:not(:disabled){background-position:100% 0;box-shadow:0 0 36px #f6e27aaa,inset 0 2px 2px #fff}
@@ -127,6 +127,22 @@ button:disabled{opacity:.4;cursor:default}
 #gameBack{position:fixed;z-index:2;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid #fff8;background:#05071399;color:#fff;border-radius:50%;font:600 22px/1 Manrope,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.72;touch-action:manipulation}
 #gameBack:hover,#gameBack:focus-visible{opacity:1;background:#050713dd}
 #gameFrame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#000}
+#gameLoader{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;background:radial-gradient(ellipse at 50% 46%,#30210c 0,#130d05 34%,#050403 78%);color:#f5eedc;text-align:center}
+#gameLoader.on{display:flex}
+#throneGlow{position:relative;width:min(150px,27vmin);aspect-ratio:1;display:grid;place-items:center;margin-bottom:4px;border:1px solid #f6e27a55;border-radius:50%;box-shadow:0 0 35px #c9972b33,inset 0 0 25px #c9972b22;animation:thronePulse 2.1s ease-in-out infinite}
+#throneGlow::before,#throneGlow::after{content:"";position:absolute;inset:-9%;border:1px solid #c9972b55;border-radius:50%;transform:rotateX(68deg);animation:throneOrbit 3.8s linear infinite}
+#throneGlow::after{inset:-18%;opacity:.45;transform:rotateX(68deg) rotateZ(60deg);animation-duration:6s;animation-direction:reverse}
+#throne{width:61%;height:68%;filter:drop-shadow(0 0 14px #f6e27a99);animation:throneFloat 2.3s ease-in-out infinite}
+@keyframes thronePulse{50%{box-shadow:0 0 55px #c9972b66,inset 0 0 36px #c9972b44}}
+@keyframes throneOrbit{to{transform:rotateX(68deg) rotateZ(360deg)}}
+@keyframes throneFloat{50%{transform:translateY(-5px)}}
+#loadingBrand{font:700 11px Manrope,sans-serif;letter-spacing:.32em;color:#d8b75c}
+#loadingTitle{font:700 clamp(20px,4vw,30px) Cinzel,Georgia,serif;letter-spacing:.12em;color:#fff3b0;text-shadow:0 0 18px #c9972b77}
+#loadingMessage{min-height:1.4em;color:#b9b2a0;font-size:13px}
+#loadingTrack{width:min(330px,72vw);height:4px;margin-top:5px;overflow:hidden;border-radius:99px;background:#ffffff18;box-shadow:0 0 10px #000}
+#loadingFill{width:0;height:100%;border-radius:inherit;background:var(--gold);box-shadow:0 0 14px #f6e27a;transition:width .15s linear}
+#loadingPercent{color:#b9a56a;font:11px ui-monospace,monospace;letter-spacing:.15em}
+@media(prefers-reduced-motion:reduce){#throneGlow,#throneGlow::before,#throneGlow::after,#throne{animation:none!important}}
 @media (max-height:430px){#desc{display:none}.top{padding:5px 14px}#info{padding:7px 14px;margin-bottom:5px}.hub{font-size:16px}}
 @media (pointer:coarse){.hints{display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
@@ -149,6 +165,11 @@ button:disabled{opacity:.4;cursor:default}
 <div id="toast" role="status" aria-live="polite"></div>
 <section id="gameView" aria-label="Jogo em execução" aria-hidden="true">
  <iframe id="gameFrame" title="Drifin Slot" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-read; clipboard-write; screen-wake-lock" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+ <div id="gameLoader" class="on" role="status" aria-live="polite" aria-hidden="true">
+  <div id="throneGlow" aria-hidden="true"><svg id="throne" viewBox="0 0 120 140" fill="none"><defs><linearGradient id="throneGold" x1="18" y1="12" x2="100" y2="132" gradientUnits="userSpaceOnUse"><stop stop-color="#fff3b0"/><stop offset=".34" stop-color="#d6a840"/><stop offset=".68" stop-color="#8a6114"/><stop offset="1" stop-color="#f6e27a"/></linearGradient></defs><path d="M35 18h50l8 49-10 12H37L27 67l8-49Z" fill="url(#throneGold)" stroke="#fff3b0" stroke-width="2"/><path d="M43 29h34l5 34H38l5-34Z" fill="#211706" stroke="#f6e27a" stroke-width="2"/><path d="m60 38 9 9-9 10-9-10 9-9Z" fill="url(#throneGold)"/><path d="M25 68h70v14H25zM20 65h12v39H20zM88 65h12v39H88zM29 82h62l-6 24H35l-6-24Z" fill="url(#throneGold)" stroke="#fff3b0" stroke-width="2"/><path d="m37 103-5 26m51-26 5 26M48 106l-2 23m26-23 2 23" stroke="url(#throneGold)" stroke-width="6" stroke-linecap="round"/><path d="M22 129h24m28 0h24" stroke="#fff3b0" stroke-width="4" stroke-linecap="round"/></svg></div>
+  <span id="loadingBrand">NJENGINE · PREPARANDO</span><strong id="loadingTitle">DRIFIN SLOT</strong><p id="loadingMessage">Preparando seu jogo…</p>
+  <div id="loadingTrack" aria-hidden="true"><div id="loadingFill"></div></div><span id="loadingPercent">0%</span>
+ </div>
  <button id="gameBack" type="button" aria-label="Voltar ao console" title="Voltar ao console">←</button>
 </section>
 </div>
@@ -156,7 +177,7 @@ button:disabled{opacity:.4;cursor:default}
 const $=id=>document.getElementById(id);
 const lite=matchMedia('(pointer:coarse)').matches||innerWidth<900,RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* Catálogo inicial: o jogo remoto só aparece na aba Jogos; não é aberto antes de entrar na Biblioteca. */
-const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Faça drift pela Coast Highway, encadeie combos e use nitro para bater seu recorde.',img:'/games/drifin-slot-cover.jpg',url:'https://car-pend.vercel.app/'}];
+const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Corrida arcade em paisagem: faça drift nas curvas da Coast Highway, encadeie combos e use nitro para superar seu recorde.',img:'/games/drifin-slot-cover.jpg',url:'https://car-pend.vercel.app/',loadTime:{min:850,max:1450}}];
 const GAMES=(window.NJ_GAMES&&window.NJ_GAMES.length)?window.NJ_GAMES:CATALOG;
 const HUBS=['Jogos','Biblioteca','Sistema'];
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -207,16 +228,22 @@ function render(){row.querySelectorAll('.tile').forEach(e=>{const d=+e.dataset.i
 const cl=p=>Math.min(Math.max(p,0),Math.max(items().length-1,0));
 function goTo(i){const n=cl(i);if(Math.round(n)!==Math.round(pos))tick();pos=n;render()}
 const cur=()=>items()[Math.round(pos)];
-function info(){const g=cur();if(!busy)$('genre').textContent=g?(g.genre||''):'';$('title').textContent=g?g.title:(hs===1?'Biblioteca vazia':'Nenhum jogo disponível');
- $('desc').textContent=g?(g.desc||''):(hs===1?'Adicione jogos pela aba Jogos para vê-los aqui.':'');btn()}
+function info(){const g=cur();if(!busy)$('genre').textContent=g?(g.title||''):'';$('title').textContent=g?(g.desc||''):(hs===1?'Biblioteca vazia':'Nenhum jogo disponível');
+ $('desc').textContent=g?'':(hs===1?'Adicione jogos pela aba Jogos para vê-los aqui.':'');btn()}
 function btn(){const g=cur(),b=$('play');let t='JOGAR',d=!g;
  if(g&&hs===0){t=inLib(g)?'NA BIBLIOTECA':'ENVIAR PARA BIBLIOTECA';d=inLib(g)}
  if(g&&hs===1){t='JOGAR';d=false}
  if(busy){t='ENVIANDO…';d=true}b.textContent=t;b.disabled=d}
 function play(){const g=cur();if(!g||busy)return;if(hs===0){if(!inLib(g))addLib(g);return}
  if(hs===1&&inLib(g)){launchGame(g);return}sel();toast('Adicione o jogo à biblioteca para jogar.')}
-function launchGame(g){if(!g||!g.url)return;sel();$('gameFrame').title=g.title;$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');$('gameFrame').src=g.url;document.body.style.overflow='hidden'}
-function closeGame(){const frame=$('gameFrame');frame.src='about:blank';$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);toast('De volta ao NJENGINE')}
+let gameLoadSequence=0,gameLoadTimer=0,gameProgressTimer=0,gameFallbackTimer=0;
+function launchGame(g){if(!g||!g.url)return;const seq=++gameLoadSequence,frame=$('gameFrame'),loader=$('gameLoader'),range=g.loadTime||{min:1700,max:3400},min=Math.max(400,+range.min||1700),max=Math.max(min,+range.max||3400),duration=Math.round(min+Math.random()*(max-min)),started=performance.now();let frameReady=false,delayReady=false;
+ sel();frame.title=g.title;$('loadingTitle').textContent=g.title.toUpperCase();$('loadingMessage').textContent='Preparando o motor 3D…';$('loadingFill').style.width='0%';$('loadingPercent').textContent='0%';loader.classList.add('on');loader.setAttribute('aria-hidden','false');$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+ const finish=()=>{if(seq!==gameLoadSequence||!frameReady||!delayReady)return;clearTimeout(gameLoadTimer);clearInterval(gameProgressTimer);clearTimeout(gameFallbackTimer);$('loadingFill').style.width='100%';$('loadingPercent').textContent='100%';$('loadingMessage').textContent='Pista pronta';setTimeout(()=>{if(seq===gameLoadSequence){loader.classList.remove('on');loader.setAttribute('aria-hidden','true')}},180)};
+ frame.onload=()=>{if(seq!==gameLoadSequence)return;frameReady=true;finish()};frame.src=g.url;
+ gameProgressTimer=setInterval(()=>{if(seq!==gameLoadSequence)return;const p=Math.min(94,Math.floor((performance.now()-started)/duration*94));$('loadingFill').style.width=p+'%';$('loadingPercent').textContent=p+'%';$('loadingMessage').textContent=p<42?'Preparando o motor 3D…':p<78?'Carregando a pista…':'Finalizando a corrida…'},80);
+ gameLoadTimer=setTimeout(()=>{delayReady=true;finish()},duration);gameFallbackTimer=setTimeout(()=>{if(seq!==gameLoadSequence||frameReady)return;frameReady=true;$('loadingMessage').textContent='Conexão lenta — abrindo o jogo…';finish()},15000)}
+function closeGame(){gameLoadSequence++;clearTimeout(gameLoadTimer);clearInterval(gameProgressTimer);clearTimeout(gameFallbackTimer);const frame=$('gameFrame');frame.onload=null;frame.src='about:blank';$('gameLoader').classList.remove('on');$('gameLoader').setAttribute('aria-hidden','true');$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);toast('De volta ao NJENGINE')}
 $('gameBack').onclick=closeGame;
 /* O envio salva o título na biblioteca local deste navegador; não depende de servidor externo. */
 function addLib(g){busy=true;btn();tick();
