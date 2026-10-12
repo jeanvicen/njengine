@@ -88,7 +88,6 @@ button:disabled{opacity:.35;cursor:default}
 
 
 
-#bar.fail i{background:#c0554a;box-shadow:0 0 10px #c0554a}
 #sys{position:absolute;inset:0;display:none;align-items:center;justify-content:center}#sys.on{display:flex}
 .box{width:min(420px,88%);padding:20px;border-radius:14px;background:linear-gradient(#ffffff14,#ffffff05);border:1px solid #c9972b55;backdrop-filter:blur(14px);line-height:1.7;font-size:13px;color:#cfc8b6}
 .box h3{font:700 15px Cinzel;letter-spacing:.15em;margin-bottom:10px}.box p{margin-bottom:8px}
@@ -106,9 +105,8 @@ button:disabled{opacity:.35;cursor:default}
 @media (prefers-reduced-motion:reduce){#rays,#reveal.sh span{animation:none!important}}
 
 
-/* Instalación PWA y ficha local de cada baia. */
+/* Instalación PWA. */
 #press { border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--g2); }
-#editor, #editor input, #editor textarea { user-select: text; -webkit-user-select: text; }
 #install { border-color: #c9972b88; color: var(--g1); font-size: 10px; letter-spacing: .12em; white-space: nowrap; }
 #install.available { color: #1a1204; background: var(--gold); box-shadow: 0 0 14px #c9972b77; }
 #sys .box { width: min(440px, 90%); }
@@ -127,42 +125,8 @@ button:disabled{opacity:.35;cursor:default}
 #desc { margin-top: 0; }
 #play { min-width: 126px; min-height: 42px; padding: 9px 20px; white-space: nowrap; }
 #play:disabled { opacity: .4; cursor: default; }
-#editor { width: min(660px, 94vw); max-width: 94vw; max-height: 92dvh; overflow: hidden; border: 1px solid #c9972b77; border-radius: 18px; padding: 0; color: #f2efe8; background: linear-gradient(145deg, #15130e, #080809 72%); box-shadow: 0 28px 100px #000d, 0 0 50px #c9972b22; }
-#editor::backdrop { background: #000c; backdrop-filter: blur(8px); }
-#edit-form { display: flex; max-height: 92dvh; flex-direction: column; }
-.editor-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #c9972b33; padding: 16px 20px; }
-.editor-kicker { margin: 0 0 4px; color: var(--g2); font-size: 10px; letter-spacing: .2em; }
-.editor-head h2 { margin: 0; font: 700 22px Cinzel, Georgia, serif; }
-.close-editor { width: 38px; height: 38px; padding: 0 !important; color: #d9d3c2 !important; font-size: 25px !important; line-height: 1; }
-.editor-content { display: grid; min-height: 0; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; overflow-y: auto; padding: 18px 20px; }
-.cover-preview { display: flex; flex-direction: column; gap: 9px; }
-.cover-preview-art { position: relative; display: grid; width: 100%; aspect-ratio: 3 / 4; place-items: center; overflow: hidden; border: 1px solid #c9972b66; border-radius: 12px; color: var(--g1); background: radial-gradient(circle at 50% 38%, #1b1508, #030303); font: 700 44px Cinzel, Georgia, serif; }
-.cover-preview-art img { width: 100%; height: 100%; object-fit: cover; }
-.cover-preview-art img[hidden], #preview-placeholder[hidden] { display: none; }
-.editor-fields { display: flex; min-width: 0; flex-direction: column; gap: 12px; }
-.editor-fields label { display: flex; flex-direction: column; gap: 6px; color: #c6bd9f; font-size: 10px; letter-spacing: .12em; }
-.editor-fields input, .editor-fields textarea { width: 100%; min-height: 38px; border: 1px solid #ffffff24; border-radius: 9px; padding: 9px 11px; color: #f2efe8; background: #050505bb; font: 13px Manrope, system-ui, sans-serif; letter-spacing: normal; }
-.editor-fields textarea { min-height: 74px; resize: vertical; }
-.editor-fields input:focus, .editor-fields textarea:focus { border-color: var(--g2); outline: 2px solid #c9972b33; }
-.editor-fields input::placeholder, .editor-fields textarea::placeholder { color: #776f60; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-#editor-notice { min-height: 16px; margin: 0; color: #f0d277; font-size: 11px; }
-.editor-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #c9972b33; padding: 12px 20px; }
-.editor-actions > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-.outline-button { min-height: 38px; border: 1px solid #c9972b66; border-radius: 999px; padding: 8px 13px; color: #e4d8b2; background: #090909; font: 600 11px Manrope, system-ui, sans-serif; cursor: pointer; }
-.save-button { min-height: 38px; border: 0; border-radius: 999px; padding: 8px 16px; color: #1a1204; background: var(--gold); font: 700 11px Manrope, system-ui, sans-serif; letter-spacing: .08em; cursor: pointer; }
 [hidden] { display: none !important; }
-@media (max-width: 560px) {
-  #editor { width: 96vw; max-width: 96vw; max-height: 94dvh; }
-  #edit-form { max-height: 94dvh; }
-  .editor-content { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
-  .cover-preview { display: grid; grid-template-columns: 82px minmax(0, 1fr); align-items: center; }
-  .cover-preview-art { grid-row: span 2; }
-  .editor-head { padding: 12px 14px; }
-  .editor-actions { align-items: stretch; flex-direction: column-reverse; padding: 12px 14px; }
-  .editor-actions > div { display: grid; grid-template-columns: 1fr 1fr; }
-  .field-row { gap: 8px; }
-}
+
 @media (prefers-reduced-motion: reduce) { .disc { animation: none !important; } }
 
   </style>
@@ -191,30 +155,13 @@ button:disabled{opacity:.35;cursor:default}
           <div class="system-actions"><button id="sound" type="button">Som ligado</button><button id="install-system" type="button">Instalar / ajuda</button></div>
         </div></div>
       </div>
-      <div id="info"><div class="copy"><div id="genre"></div><h2 id="title"></h2><p id="desc"></p></div><button id="play" type="button" disabled>ADICIONAR JOGO</button></div>
+      <div id="info"><div class="copy"><div id="genre"></div><h2 id="title"></h2><p id="desc"></p></div><button id="play" type="button" disabled>JOGAR</button></div>
     </section>
   </div>
   <footer class="hints" id="hints"></footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
-<dialog id="editor" aria-labelledby="editor-title">
-  <form id="edit-form">
-    <header class="editor-head"><div><p class="editor-kicker">NJENGINE · FICHA DO JOGO</p><h2 id="editor-title">Baia 01</h2></div><button type="button" class="close-editor" data-close-editor aria-label="Fechar">×</button></header>
-    <div class="editor-content">
-      <div class="cover-preview"><div class="cover-preview-art"><img id="preview-image" alt="Prévia da capa" hidden><span id="preview-placeholder">＋</span></div><button id="cover-button" type="button" class="outline-button">Escolher capa</button><button id="remove-cover" type="button" class="outline-button" hidden>Remover capa</button><input id="cover-input" type="file" accept="image/*" hidden></div>
-      <div class="editor-fields">
-        <label>Título<input id="title-input" maxlength="48" autocomplete="off" placeholder="Nome do seu jogo" required></label>
-        <label>Descrição<textarea id="description-input" maxlength="480" rows="3" placeholder="O que você quer lembrar sobre ele?"></textarea></label>
-        <div class="field-row"><label>Gênero<input id="genre-input" maxlength="28" placeholder="Ação"></label><label>Plataforma<input id="platform-input" maxlength="28" placeholder="Web"></label></div>
-        <div class="field-row"><label>Ano<input id="year-input" maxlength="4" inputmode="numeric" placeholder="2026"></label><span></span></div>
-        <label>Link para jogar<input id="play-input" maxlength="500" inputmode="url" placeholder="https://"></label>
-        <label>Trailer direto (opcional)<input id="video-input" maxlength="500" inputmode="url" placeholder="https://…/trailer.mp4"></label>
-        <p id="editor-notice" role="status" aria-live="polite"></p>
-      </div>
-    </div>
-    <footer class="editor-actions"><button id="clear-slot" type="button" class="outline-button" hidden>Limpar baia</button><div><button type="button" class="outline-button" data-close-editor>Cancelar</button><button type="submit" class="save-button">Guardar jogo</button></div></footer>
-  </form>
-</dialog>
+
 <script>
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = "njengines.bays.v1";
@@ -275,8 +222,6 @@ let masterGain = null;
 let audioBus = null;
 let deferredInstallPrompt = null;
 let toastTimer = 0;
-let editingId = null;
-let editingImage = "";
 let particles = [];
 let canvasWidth = 0;
 let canvasHeight = 0;
@@ -296,16 +241,6 @@ function currentIndex() { return Math.max(0, Math.min(Math.round(position), item
 function currentSlot() {
   const item = items()[currentIndex()];
   return item || (hub === 2 ? null : firstFree());
-}
-function saveSlots(next) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next.map((slot, index) => sanitize(slot, emptySlot(index)))));
-    slots = next.map((slot, index) => sanitize(slot, emptySlot(index)));
-    return true;
-  } catch {
-    toast("Não deu para guardar neste aparelho. Tente uma capa menor.");
-    return false;
-  }
 }
 function toast(message) {
   const node = $("toast");
@@ -350,7 +285,7 @@ function buildCard(item, index) {
   card.className = `tile${hasGame ? "" : " empty"}`;
   card.dataset.index = String(index);
   card.setAttribute("aria-pressed", "false");
-  card.setAttribute("aria-label", isLibraryEmpty ? "Biblioteca vazia. Vá para Jogos para adicionar seus jogos." : hasGame ? `${slot.title || "Jogo"}, selecionar` : `Baia ${slot.bay}, espaço livre, selecionar`);
+  card.setAttribute("aria-label", isLibraryEmpty ? "Biblioteca vazia." : hasGame ? `${slot.title || "Jogo"}, selecionar` : `Baia ${slot.bay}, espaço livre, selecionar`);
   const face = document.createElement("span");
   face.className = "face";
   if (hasGame) {
@@ -390,7 +325,6 @@ function buildCard(item, index) {
       renderPosition();
       return;
     }
-    if (isLibraryEmpty) { setHub(-1); return; }
     activateSlot(slot);
   });
   card.addEventListener("keydown", (event) => {
@@ -477,12 +411,12 @@ function updateInfo() {
   const isLibraryEmpty = hub === 1 && savedGames().length === 0;
   const slot = currentSlot();
   const hasGame = Boolean(slot && filled(slot));
-  $("genre").textContent = isLibraryEmpty ? "SEM JOGOS CADASTRADOS" : hasGame ? slot.genre || slot.platform || "JOGO DA BIBLIOTECA" : slot ? `BAIA ${slot.bay} · ESPAÇO LIVRE` : "SUA BIBLIOTECA";
-  $("title").textContent = isLibraryEmpty ? "Biblioteca vazia" : hasGame ? slot.title || `Baia ${slot.bay}` : slot ? `Baia ${slot.bay} · livre` : "Biblioteca vazia";
-  $("desc").textContent = isLibraryEmpty ? "Adicione jogos pela aba Jogos para vê-los aqui." : hasGame ? slot.description || [slot.genre, slot.platform, slot.year].filter(Boolean).join(" · ") || "Jogo cadastrado nesta biblioteca." : slot ? "Este espaço fica reservado para um jogo seu. Abra a ficha para adicionar título, capa e link." : "Adicione seus jogos pela aba Jogos para vê-los aqui.";
+  $("genre").textContent = isLibraryEmpty ? "BIBLIOTECA VAZIA" : hasGame ? slot.genre || slot.platform || "JOGO DA BIBLIOTECA" : slot ? `BAIA ${slot.bay} · ESPAÇO LIVRE` : "SEM JOGOS DISPONÍVEIS";
+  $("title").textContent = isLibraryEmpty ? "Biblioteca vazia" : hasGame ? slot.title || `Baia ${slot.bay}` : slot ? `Baia ${slot.bay} · livre` : "Nenhum jogo disponível";
+  $("desc").textContent = isLibraryEmpty ? "Ainda não há jogos nesta biblioteca." : hasGame ? slot.description || [slot.genre, slot.platform, slot.year].filter(Boolean).join(" · ") || "Jogo cadastrado nesta biblioteca." : slot ? "Espaço reservado para um jogo futuro." : "Os jogos aparecerão aqui em breve.";
   const play = $("play");
-  play.disabled = !slot;
-  play.textContent = isLibraryEmpty ? "IR PARA JOGOS  ←" : hasGame ? (cleanUrl(slot.playUrl) ? "JOGAR" : "EDITAR FICHA") : "ADICIONAR JOGO  +";
+  play.disabled = !(hasGame && cleanUrl(slot.playUrl));
+  play.textContent = "JOGAR";
 }
 function setHub(direction) {
   const next = clamp(hub + direction, 0, 2);
@@ -503,19 +437,14 @@ function moveCard(direction) {
   renderPosition();
 }
 function activateSlot(slot) {
-  if (!slot) return;
+  if (!slot || !filled(slot)) return;
   const href = cleanUrl(slot.playUrl);
-  if (filled(slot) && href) {
-    window.open(href, "_blank", "noopener,noreferrer");
-    playSelection();
-  } else {
-    openEditor(slot);
-    playSelection();
-  }
+  if (!href) return;
+  window.open(href, "_blank", "noopener,noreferrer");
+  playSelection();
 }
 function activateCurrent() {
   if (hub === 2) { toggleMute(); return; }
-  if (hub === 1 && savedGames().length === 0) { setHub(-1); return; }
   activateSlot(currentSlot());
 }
 function pointerDown(event) {
@@ -701,100 +630,6 @@ function updateConnection() {
   $("conn").append(dot, document.createTextNode(online ? "Online" : "Offline"));
   $("sCon").textContent = online ? "online" : "offline";
 }
-function openEditor(slot) {
-  editingId = slot.id;
-  editingImage = slot.imageUrl || "";
-  $("editor-title").textContent = `Baia ${slot.bay}`;
-  $("title-input").value = slot.title;
-  $("description-input").value = slot.description;
-  $("genre-input").value = slot.genre;
-  $("platform-input").value = slot.platform;
-  $("year-input").value = slot.year;
-  $("play-input").value = slot.playUrl;
-  $("video-input").value = slot.videoUrl;
-  $("cover-input").value = "";
-  $("remove-cover").hidden = !editingImage;
-  $("clear-slot").hidden = !filled(slot);
-  $("editor-notice").textContent = "";
-  updatePreview();
-  $("editor").showModal();
-  window.setTimeout(() => $("title-input").focus(), 30);
-}
-function updatePreview() {
-  const image = $("preview-image");
-  const placeholder = $("preview-placeholder");
-  const title = $("title-input").value.trim();
-  if (editingImage) {
-    image.src = editingImage;
-    image.hidden = false;
-    placeholder.hidden = true;
-  } else {
-    image.removeAttribute("src");
-    image.hidden = true;
-    placeholder.textContent = title ? title.slice(0, 1).toUpperCase() : "＋";
-    placeholder.hidden = false;
-  }
-  $("remove-cover").hidden = !editingImage;
-}
-function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith("image/")) { reject(new Error("Escolha um arquivo de imagem.")); return; }
-    const objectUrl = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      const scale = Math.min(1, 1000 / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      const context = canvas.getContext("2d");
-      if (!context) { URL.revokeObjectURL(objectUrl); reject(new Error("Não foi possível ler a imagem.")); return; }
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      let data = canvas.toDataURL("image/jpeg", 0.82);
-      if (data.length > 1_600_000) data = canvas.toDataURL("image/jpeg", 0.68);
-      URL.revokeObjectURL(objectUrl);
-      if (data.length > 2_300_000) reject(new Error("A capa continua grande. Escolha uma imagem menor."));
-      else resolve(data);
-    };
-    image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Não foi possível abrir a imagem.")); };
-    image.src = objectUrl;
-  });
-}
-function saveEditor(event) {
-  event.preventDefault();
-  const slot = slots.find((item) => item.id === editingId);
-  if (!slot) return;
-  const title = $("title-input").value.trim();
-  if (!title) { $("title-input").focus(); $("editor-notice").textContent = "Digite o título do jogo para guardar."; return; }
-  const rawPlay = $("play-input").value.trim();
-  const rawVideo = $("video-input").value.trim();
-  if (rawPlay && !cleanUrl(rawPlay)) { $("play-input").focus(); $("editor-notice").textContent = "O link de Play precisa começar com http:// ou https://."; return; }
-  if (rawVideo && !cleanUrl(rawVideo)) { $("video-input").focus(); $("editor-notice").textContent = "O link do trailer precisa começar com http:// ou https://."; return; }
-  const draft = sanitize({
-    ...slot,
-    title,
-    description: $("description-input").value,
-    genre: $("genre-input").value,
-    platform: $("platform-input").value,
-    year: $("year-input").value,
-    playUrl: rawPlay,
-    videoUrl: rawVideo,
-    imageUrl: editingImage,
-  }, slot);
-  const next = slots.map((item) => item.id === slot.id ? draft : item);
-  if (!saveSlots(next)) { $("editor-notice").textContent = "Não foi possível guardar. Tente uma capa menor."; return; }
-  $("editor").close();
-  renderCards();
-  toast("Jogo guardado neste aparelho.");
-}
-function clearEditorSlot() {
-  const slot = slots.find((item) => item.id === editingId);
-  if (!slot || !window.confirm(`Limpar a Baia ${slot.bay}?`)) return;
-  const next = slots.map((item) => item.id === slot.id ? emptySlot(Number(slot.bay) - 1) : item);
-  if (!saveSlots(next)) return;
-  $("editor").close();
-  renderCards();
-  toast(`Baia ${slot.bay} limpa.`);
-}
 function installHelp() {
   const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   if (standalone) { toast("NJENGINE já está instalado neste aparelho."); return; }
@@ -852,40 +687,16 @@ function drawBackground(time) {
 }
 
 $("boot").addEventListener("click", startBoot);
-$("play").addEventListener("click", () => {
-  if (hub === 1 && savedGames().length === 0) { setHub(-1); return; }
-  const slot = currentSlot();
-  if (!slot) return;
-  const href = filled(slot) ? cleanUrl(slot.playUrl) : "";
-  if (href) { window.open(href, "_blank", "noopener,noreferrer"); playSelection(); }
-  else openEditor(slot);
-});
+$("play").addEventListener("click", () => activateSlot(currentSlot()));
 $("sound").addEventListener("click", toggleMute);
 $("install").addEventListener("click", installHelp);
 $("install-system").addEventListener("click", installHelp);
-$("edit-form").addEventListener("submit", saveEditor);
-$("clear-slot").addEventListener("click", clearEditorSlot);
-$("cover-button").addEventListener("click", () => $("cover-input").click());
-$("remove-cover").addEventListener("click", () => { editingImage = ""; updatePreview(); });
-$("cover-input").addEventListener("change", async (event) => {
-  const file = event.target.files && event.target.files[0];
-  event.target.value = "";
-  if (!file) return;
-  try { editingImage = await compressImage(file); updatePreview(); }
-  catch (error) { $("editor-notice").textContent = error instanceof Error ? error.message : "Não foi possível carregar a capa."; }
-});
-$("title-input").addEventListener("input", updatePreview);
-document.querySelectorAll("[data-close-editor]").forEach((button) => button.addEventListener("click", () => $("editor").close()));
-$("editor").addEventListener("click", (event) => {
-  if (event.target === $("editor")) $("editor").close();
-});
 row.addEventListener("pointerdown", pointerDown);
 row.addEventListener("pointermove", pointerMove);
 row.addEventListener("pointerup", pointerUp);
 row.addEventListener("pointercancel", pointerUp);
 row.addEventListener("wheel", pointerWheel, { passive: false });
 window.addEventListener("keydown", (event) => {
-  if ($("editor").open) return;
   if (!bootStarted) {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); startBoot(); }
     return;
@@ -912,7 +723,7 @@ clock(); window.setInterval(clock, 15_000);
 updateConnection();
 $("hints").innerHTML = window.matchMedia("(pointer:coarse)").matches || innerWidth < 900
   ? "<span>Deslize para os lados: jogos</span><span>Deslize para cima ou baixo: menus</span>"
-  : "<span>↑ ↓ Menus</span><span>← → Navegar</span><span>Enter Selecionar</span>";
+  : "<span>↑ ↓ Menus</span><span>← → Navegar</span><span>Enter Jogar</span>";
 renderHubs();
 renderCards();
 layout();
