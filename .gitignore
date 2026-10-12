@@ -1,6 +1,6 @@
 node_modules/
-.project_id
-.github_repo
+dist/
+.vercel/
 .env
 .env.*
-.vercel/
+package-lock.json
