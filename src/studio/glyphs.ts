@@ -7,9 +7,28 @@ const GLYPHS: Record<string, string[]> = {
   S: [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
 };
 
-export const WORD = "NJENGINE";
+export const WORD = "NJENGINES";
 
 export type LogoPoint = { x: number; y: number };
+export type LogoCell = { row: number; column: number; index: number };
+
+export function buildWordGrid(): { cells: LogoCell[]; columns: number; rows: number } {
+  const cells: LogoCell[] = [];
+  let letterOffset = 0;
+  for (const character of WORD) {
+    const glyph = GLYPHS[character];
+    if (!glyph) continue;
+    for (let row = 0; row < 7; row++) {
+      for (let column = 0; column < 5; column++) {
+        if (glyph[row]?.[column] === "#") {
+          cells.push({ row, column: letterOffset + column, index: cells.length });
+        }
+      }
+    }
+    letterOffset += 6;
+  }
+  return { cells, columns: WORD.length * 5 + WORD.length - 1, rows: 7 };
+}
 
 export type LogoLayout = {
   points: LogoPoint[];

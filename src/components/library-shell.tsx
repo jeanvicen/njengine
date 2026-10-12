@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowDownAZ,
   ChevronDown,
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Dossier } from "@/components/studio-shell";
 import { paintCoverDataUrl } from "@/studio/covers";
-import type { EngineHandle } from "@/studio/create-engine";
+import { buildWordGrid } from "@/studio/glyphs";
 import {
   createSlots,
   isFilled,
@@ -30,6 +30,7 @@ import {
 } from "@/studio/slots";
 
 type BootPhase = "forming" | "blackout" | "flash" | "reveal";
+type BootStyle = CSSProperties & { [property: `--${string}`]: string | number };
 
 type CarouselCard = {
   slot: GameSlot;
@@ -37,12 +38,15 @@ type CarouselCard = {
   position: "previous" | "selected" | "next";
 };
 
+const BOOT_WORD_GRID = buildWordGrid();
+
 export function LibraryShell() {
   const [slots, setSlots] = useState<GameSlot[]>(createSlots);
   const [ready, setReady] = useState(false);
   const [bootVisible, setBootVisible] = useState(true);
   const [bootPhase, setBootPhase] = useState<BootPhase>("forming");
   const [introFinished, setIntroFinished] = useState(false);
+  const [portraitMobile, setPortraitMobile] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState(true);
   const [clock, setClock] = useState("");
@@ -59,6 +63,18 @@ export function LibraryShell() {
     const saved = readSlots();
     setSlots(saved);
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
+    const update = () => setPortraitMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   useEffect(() => {
@@ -81,7 +97,7 @@ export function LibraryShell() {
   }, [ready, introFinished]);
 
   useEffect(() => {
-    if (!bootVisible) return;
+    if (!bootVisible || portraitMobile) return;
     const audio = new Audio("/intro.mp3");
     audio.preload = "auto";
     audio.volume = 0.7;
@@ -99,7 +115,7 @@ export function LibraryShell() {
       window.removeEventListener("pointerdown", start);
       window.removeEventListener("keydown", start);
     };
-  }, [bootVisible]);
+  }, [bootVisible, portraitMobile]);
 
   useEffect(() => {
     const update = () => setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
@@ -178,8 +194,8 @@ export function LibraryShell() {
   ) : null;
 
   return (
-    <main className={`nj-shell ${bootVisible ? `nj-shell--${bootPhase}` : "nj-shell--ready"}`} aria-busy={bootVisible}>
-      <div className={`nj-app-content ${bootVisible && bootPhase !== "reveal" ? "nj-app-content--covered" : ""} ${bootVisible && bootPhase === "reveal" ? "nj-app-content--revealing" : ""}`} aria-hidden={bootVisible || undefined}>
+    <main className={`nj-shell ${bootVisible ? `nj-shell--${bootPhase}` : "nj-shell--ready"}`} aria-busy={bootVisible || portraitMobile}>
+      <div className={`nj-app-content ${bootVisible && bootPhase !== "reveal" ? "nj-app-content--covered" : ""} ${bootVisible && bootPhase === "reveal" ? "nj-app-content--revealing" : ""}`} aria-hidden={bootVisible || portraitMobile || undefined}>
         <LibraryView
           slots={slots}
           ready={ready}
@@ -194,121 +210,80 @@ export function LibraryShell() {
         />
         {dossier}
       </div>
-      {bootVisible && <BootIntro phase={bootPhase} slots={slots} ready={ready} soundOn={soundOn} onToggleSound={toggleSound} onComplete={() => setIntroFinished(true)} />}
+      {bootVisible && !portraitMobile && <BootIntro phase={bootPhase} soundOn={soundOn} onToggleSound={toggleSound} onComplete={() => setIntroFinished(true)} />}
+      {portraitMobile && <LandscapePrompt />}
     </main>
+  );
+}
+
+function LandscapePrompt() {
+  return (
+    <section className="nj-orientation-prompt rotate-hint" role="status" aria-label="Gire o celular para continuar">
+      <p className="nj-orientation-brand">NJ<span>ENGINE</span></p>
+      <p className="kicker nj-orientation-copy">Vire o aparelho para a experiência horizontal</p>
+      <div className="rotate-phone" aria-hidden="true" />
+    </section>
   );
 }
 
 function BootIntro({
   phase,
-  slots,
-  ready,
   soundOn,
   onToggleSound,
   onComplete,
 }: {
   phase: BootPhase;
-  slots: GameSlot[];
-  ready: boolean;
   soundOn: boolean;
   onToggleSound: () => void;
   onComplete: () => void;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<EngineHandle | null>(null);
+  const [pullingBack, setPullingBack] = useState(false);
   const completeRef = useRef(onComplete);
-  const [webgl, setWebgl] = useState(true);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [cameraPullingBack, setCameraPullingBack] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const games = slots.filter(isFilled);
-  const gameSignature = games.map((game) => game.id).join("|");
   completeRef.current = onComplete;
 
   useEffect(() => {
-    if (!ready) return;
-    let dead = false;
-    let handle: EngineHandle | null = null;
-    let fallbackTimer: number | null = null;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setReducedMotion(reduced);
-
-    if (reduced) {
-      setProgress(100);
-      fallbackTimer = window.setTimeout(() => completeRef.current(), 900);
-      return () => {
-        dead = true;
-        if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
-      };
-    }
-
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      setWebgl(false);
-      fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
-      return () => {
-        dead = true;
-        if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
-      };
-    }
-
-    void import("@/studio/create-engine").then(({ createEngine }) => {
-      if (dead || !canvasRef.current) return;
-      handle = createEngine({
-        canvas: canvasRef.current,
-        slots: games,
-        reduced: false,
-        onPhase: (next) => {
-          if (next === "gallery") setCameraPullingBack(true);
-        },
-        onProgress: (value) => {
-          setProgress(value);
-          if (value >= 100) completeRef.current();
-        },
-        onSelect: () => {},
-        onHover: () => {},
-        onFocus: () => {},
-        onFail: () => {
-          setWebgl(false);
-          fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
-        },
-      });
-      if (dead) {
-        handle.dispose();
-        return;
-      }
-      engineRef.current = handle;
-    }).catch(() => {
-      if (dead) return;
-      setWebgl(false);
-      fallbackTimer = window.setTimeout(() => completeRef.current(), 1_200);
-    });
-
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pullback = reducedMotion ? 0 : window.setTimeout(() => setPullingBack(true), 2_250);
+    const finish = window.setTimeout(() => completeRef.current(), reducedMotion ? 850 : 3_550);
     return () => {
-      dead = true;
-      if (fallbackTimer !== null) window.clearTimeout(fallbackTimer);
-      handle?.dispose();
-      engineRef.current = null;
+      if (pullback) window.clearTimeout(pullback);
+      window.clearTimeout(finish);
     };
-  }, [ready, gameSignature]);
+  }, []);
 
-  const useFallback = reducedMotion || !webgl;
   return (
-    <section className={`nj-boot nj-boot--${phase}`} aria-label="Abertura do NJ Engine" aria-live="polite">
-      {!useFallback && <canvas ref={canvasRef} className="nj-boot-canvas" aria-hidden="true" />}
-      <div className="nj-boot-shade" aria-hidden="true" />
-      {useFallback ? (
-        <div className="nj-boot-fallback">
-          <img src="/favicon.svg" alt="" />
-          <h1 className="nj-boot-fallback-name">NJ<span>ENGINE</span></h1>
-          <p className="nj-boot-status"><span className="nj-boot-status-dot" /> CARREGANDO SUA BIBLIOTECA</p>
+    <section className={`nj-boot nj-boot--${phase}`} aria-label="Abertura do NJ Engine">
+      <div className={`nj-boot-camera ${pullingBack ? "is-pulling-back" : ""}`}>
+        <div
+          className="nj-boot-word-grid"
+          role="img"
+          aria-label="NJENGINES"
+          style={{ "--grid-columns": BOOT_WORD_GRID.columns } as BootStyle}
+        >
+          {BOOT_WORD_GRID.cells.map(({ row, column, index }) => {
+            const scatterX = ((index * 83) % 121) - 60;
+            const scatterY = ((index * 47) % 91) - 45;
+            const scatterZ = 180 + ((index * 29) % 620);
+            const rotation = ((index * 37) % 241) - 120;
+            const delay = ((index * 31) % 47) * 18;
+            return (
+              <span
+                key={`${row}-${column}`}
+                className={`nj-boot-tile ${index % 8 === 0 ? "nj-boot-tile--gold" : ""}`}
+                style={{
+                  gridRow: row + 1,
+                  gridColumn: column + 1,
+                  "--scatter-x": `${scatterX}vw`,
+                  "--scatter-y": `${scatterY}vh`,
+                  "--scatter-z": `${scatterZ}px`,
+                  "--scatter-rotation": `${rotation}deg`,
+                  "--tile-delay": `${delay}ms`,
+                } as BootStyle}
+              />
+            );
+          })}
         </div>
-      ) : (
-        <div className="nj-boot-hud">
-          <p className="nj-boot-status"><span className="nj-boot-status-dot" /> {cameraPullingBack ? "ABRINDO SUA BIBLIOTECA" : "CARTAS SE ORGANIZANDO"}</p>
-          <div className="nj-boot-progress" aria-hidden="true"><span style={{ width: `${progress}%` }} /></div>
-        </div>
-      )}
+      </div>
       {phase === "forming" && (
         <button type="button" className="nj-boot-sound" onClick={onToggleSound} aria-label={soundOn ? "Silenciar abertura" : "Ativar som da abertura"}>
           {soundOn ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
