@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LibraryShell } from "@/components/library-shell";
+import { ConsoleShell } from "@/components/console-shell";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
-  return <LibraryShell />;
+  return <ConsoleShell />;
 }

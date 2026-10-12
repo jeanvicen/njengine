@@ -1,21 +1,16 @@
-# NJengine
+# NJENGINE
 
-NJengine is a personal game library for the web. Each visit opens with a cinematic NJ Engine startup, then reveals a horizontal carousel with the selected game highlighted and neighboring games dimmed.
+NJENGINE is a personal game-library launcher for the web, built around Jean's console-interface prototype. It opens with the gold cinematic boot, then presents three hubs and a horizontal, 3D-perspective cover selector.
 
 ## What it does
 
-- Keeps up to 12 personal game entries in this browser, including title, description, genre, platform, year, cover, trailer URL, and a real HTTP(S) Play link.
-- Provides search, genre filters, and sorting in the library view.
-- Shows up to three real games at once in a horizontal carousel; keyboard, touch, and compatible gamepad controls move the selection.
-- At startup, cover-like tiles assemble into `NJENGINES`, then a cinematic pullback, blackout, and flash reveal the library. Mobile browsers ask for landscape orientation; installed PWA launches landscape. The horizontal blade tabs and focused cover rail are inspired by the Xbox 360 dashboard; the intro and optional navigation sounds are included.
-- Opens only links supplied in a game's own entry. It does not create sample games, destinations, or metadata.
+- The Juegos hub shows real games saved by the user; the Library hub shows the 12 personal bays, including empty cards reserved for future games.
+- Selecting an empty bay opens its game ficha. Entries support title, description, genre, platform, year, cover, trailer, and an HTTP(S) Play link.
+- The System hub reports the browser's actual online status, locally saved game count, local storage behavior, and sound control.
+- Keyboard, touch gestures, and compatible gamepads navigate the hubs and cover rail. Only the saved Play link can be opened.
+- On phones, the interface requests landscape orientation. The installed PWA manifest also requests landscape.
+- No demo game names, fake Play links, or invented user profiles are included. Saved entries stay in this browser and do not automatically sync to other devices.
 
-## Web edition limits
+## Interface references
 
-NJengine remains a browser app deployed on Vercel. Browser security does not let this edition scan arbitrary folders for installed `.exe` files, configure local emulators, or launch desktop programs. The Play button opens a web destination that the user explicitly saved. A native Windows edition would be needed for PlayWD Games-style folder scanning and local executable launching.
-
-Game entries and images are stored in the browser's local storage, so they do not automatically sync to another browser or device. The catalog starts empty by design.
-
-## Reference
-
-The library and launcher interaction patterns were informed by [PlayWD Games](https://github.com/adifreza/playwdgames). NJengine's UI and implementation are its own; no upstream code or artwork was copied.
+The visual style and opening are adapted from the user-provided NJENGINE HTML prototype. The horizontal navigation and focused cover rail take inspiration from the Xbox 360 Blades/NXE dashboard family; no Xbox artwork or game data is bundled.
