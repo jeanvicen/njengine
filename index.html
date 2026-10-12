@@ -122,14 +122,11 @@ button:disabled{opacity:.4;cursor:default}
 .hints kbd{font:inherit;color:#eee;border:1px solid #c9972b66;border-radius:5px;padding:0 6px;margin-right:5px}
 #toast{position:fixed;left:50%;bottom:60px;transform:translate(-50%,20px);z-index:40;background:#000d;border:1px solid var(--g2);padding:8px 18px;border-radius:999px;font-size:12px;opacity:0;transition:all .5s var(--e);pointer-events:none;backdrop-filter:blur(8px);max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-#gameView{position:fixed;inset:0;z-index:35;display:none;flex-direction:column;background:#050403}
-#gameView.on{display:flex}
-#gameBar{height:54px;flex:none;display:flex;align-items:center;gap:14px;padding:8px 16px;background:linear-gradient(90deg,#100d07,#050403);border-bottom:1px solid #c9972b66}
-#gameBack{flex:none;color:#f6e27a;padding:7px 13px}
-#gameLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px Cinzel,Georgia,serif;letter-spacing:.12em}
-#gameHint{margin-left:auto;color:#9b927c;font-size:11px;white-space:nowrap}
-#gameFrame{display:block;flex:1;width:100%;height:calc(100% - 54px);border:0;background:#000}
-@media(max-width:560px){#gameBar{height:48px;padding:6px 9px;gap:9px}#gameHint{display:none}#gameFrame{height:calc(100% - 48px)}}
+#gameView{position:fixed;inset:0;z-index:35;display:none;background:#000}
+#gameView.on{display:block}
+#gameBack{position:fixed;z-index:2;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid #fff8;background:#05071399;color:#fff;border-radius:50%;font:600 22px/1 Manrope,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.72;touch-action:manipulation}
+#gameBack:hover,#gameBack:focus-visible{opacity:1;background:#050713dd}
+#gameFrame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#000}
 @media (max-height:430px){#desc{display:none}.top{padding:5px 14px}#info{padding:7px 14px;margin-bottom:5px}.hub{font-size:16px}}
 @media (pointer:coarse){.hints{display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
@@ -151,15 +148,15 @@ button:disabled{opacity:.4;cursor:default}
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <section id="gameView" aria-label="Jogo em execução" aria-hidden="true">
- <div id="gameBar"><button id="gameBack" type="button">← VOLTAR AO CONSOLE</button><strong id="gameLabel">DRIFIN SLOT</strong><span id="gameHint">O jogo está rodando dentro do NJENGINE</span></div>
  <iframe id="gameFrame" title="Drifin Slot" allow="autoplay; fullscreen; gamepad; accelerometer; gyroscope; clipboard-read; clipboard-write; screen-wake-lock" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+ <button id="gameBack" type="button" aria-label="Voltar ao console" title="Voltar ao console">←</button>
 </section>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 const lite=matchMedia('(pointer:coarse)').matches||innerWidth<900,RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* Catálogo inicial: o jogo remoto só aparece na aba Jogos; não é aberto antes de entrar na Biblioteca. */
-const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Corrida em paisagem: faça drift na Coast Highway e acumule combos.',url:'https://car-pend.vercel.app/'}];
+const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Faça drift pela Coast Highway, encadeie combos e use nitro para bater seu recorde.',img:'/games/drifin-slot-cover.jpg',url:'https://car-pend.vercel.app/'}];
 const GAMES=(window.NJ_GAMES&&window.NJ_GAMES.length)?window.NJ_GAMES:CATALOG;
 const HUBS=['Jogos','Biblioteca','Sistema'];
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -218,7 +215,7 @@ function btn(){const g=cur(),b=$('play');let t='JOGAR',d=!g;
  if(busy){t='ENVIANDO…';d=true}b.textContent=t;b.disabled=d}
 function play(){const g=cur();if(!g||busy)return;if(hs===0){if(!inLib(g))addLib(g);return}
  if(hs===1&&inLib(g)){launchGame(g);return}sel();toast('Adicione o jogo à biblioteca para jogar.')}
-function launchGame(g){if(!g||!g.url)return;sel();$('gameLabel').textContent=g.title.toUpperCase();$('gameFrame').title=g.title;$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');$('gameFrame').src=g.url;document.body.style.overflow='hidden'}
+function launchGame(g){if(!g||!g.url)return;sel();$('gameFrame').title=g.title;$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');$('gameFrame').src=g.url;document.body.style.overflow='hidden'}
 function closeGame(){const frame=$('gameFrame');frame.src='about:blank';$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);toast('De volta ao NJENGINE')}
 $('gameBack').onclick=closeGame;
 /* O envio salva o título na biblioteca local deste navegador; não depende de servidor externo. */

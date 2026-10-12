@@ -1,4 +1,4 @@
-const CACHE_NAME = "njengine-static-v2";
+const CACHE_NAME = "njengine-static-v3";
 const SHELL = [
   "/",
   "/index.html",
@@ -6,6 +6,7 @@ const SHELL = [
   "/__grok/icon-180.png",
   "/__grok/icon-192.png",
   "/__grok/icon-512.png",
+  "/games/drifin-slot-cover.jpg",
 ];
 
 self.addEventListener("install", (event) => {

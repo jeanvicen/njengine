@@ -10,10 +10,12 @@ const files = [
   ["public/__grok/icon-180.png", "__grok/icon-180.png"],
   ["public/__grok/icon-192.png", "__grok/icon-192.png"],
   ["public/__grok/icon-512.png", "__grok/icon-512.png"],
+  ["public/games/drifin-slot-cover.jpg", "games/drifin-slot-cover.jpg"],
 ];
 
 await rm(output, { recursive: true, force: true });
 await mkdir(resolve(output, "__grok"), { recursive: true });
+await mkdir(resolve(output, "games"), { recursive: true });
 for (const [source, destination] of files) {
   await copyFile(resolve(root, source), resolve(output, destination));
 }
