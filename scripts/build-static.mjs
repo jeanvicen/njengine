@@ -11,6 +11,7 @@ const files = [
   ["public/__grok/icon-192.png", "__grok/icon-192.png"],
   ["public/__grok/icon-512.png", "__grok/icon-512.png"],
   ["public/games/drifin-slot-cover.jpg", "games/drifin-slot-cover.jpg"],
+  ["public/games/corrida-lunar-cover.jpg", "games/corrida-lunar-cover.jpg"],
   ["public/sounds/njengine-boot.mp3", "sounds/njengine-boot.mp3"],
 ];
 

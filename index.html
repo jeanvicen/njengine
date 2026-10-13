@@ -179,7 +179,7 @@ button:disabled{opacity:.4;cursor:default}
 const $=id=>document.getElementById(id);
 const lite=matchMedia('(pointer:coarse)').matches||innerWidth<900,RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* Catálogo inicial: o jogo remoto só aparece na aba Jogos; não é aberto antes de entrar na Biblioteca. */
-const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Corrida arcade em paisagem: faça drift nas curvas da Coast Highway, encadeie combos e use nitro para superar seu recorde.',img:'/games/drifin-slot-cover.jpg',url:'https://car-pend.vercel.app/',loadTime:{min:850,max:1450}}];
+const CATALOG=[{title:'Drifin Slot',genre:'Corrida · Neon Drift',desc:'Corrida arcade em paisagem: faça drift nas curvas da Coast Highway, encadeie combos e use nitro para superar seu recorde.',img:'/games/drifin-slot-cover.jpg',url:'https://car-pend.vercel.app/',loadTime:{min:850,max:1450}},{title:'Corrida Lunar',genre:'Corrida · Arcade 3D',desc:'Dispute três voltas no Grande Prêmio Lunar: acelere, derrape, use nitro e itens para ultrapassar os rivais.',img:'/games/corrida-lunar-cover.jpg',url:'https://backrooms-flax.vercel.app/',loadTime:{min:1000,max:1800}}];
 const GAMES=(window.NJ_GAMES&&window.NJ_GAMES.length)?window.NJ_GAMES:CATALOG;
 const HUBS=['Jogos','Biblioteca','Sistema'];
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};

@@ -1,4 +1,4 @@
-const CACHE_NAME = "njengine-static-v4";
+const CACHE_NAME = "njengine-static-v5";
 const SHELL = [
   "/",
   "/index.html",
@@ -7,6 +7,7 @@ const SHELL = [
   "/__grok/icon-192.png",
   "/__grok/icon-512.png",
   "/games/drifin-slot-cover.jpg",
+  "/games/corrida-lunar-cover.jpg",
   "/sounds/njengine-boot.mp3",
 ];
 
