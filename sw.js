@@ -1,4 +1,4 @@
-const CACHE_NAME = "njengine-static-v5";
+const CACHE_NAME = "njengine-static-v6";
 const SHELL = [
   "/",
   "/index.html",
