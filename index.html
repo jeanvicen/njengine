@@ -124,7 +124,7 @@ button:disabled{opacity:.4;cursor:default}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #gameView{position:fixed;inset:0;z-index:35;display:none;background:#000}
 #gameView.on{display:block}
-#gameBack{position:fixed;z-index:2;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid #fff8;background:#05071399;color:#fff;border-radius:50%;font:600 22px/1 Manrope,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.72;touch-action:manipulation}
+#gameBack{position:fixed;z-index:4;top:max(8px,env(safe-area-inset-top));left:50%;width:34px;height:28px;display:grid;place-items:center;padding:0;border:1px solid #fff8;background:#050713cc;color:#fff;border-radius:8px;font:600 17px/1 Manrope,sans-serif;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.8;transform:translateX(-50%);touch-action:manipulation}
 #gameBack:hover,#gameBack:focus-visible{opacity:1;background:#050713dd}
 #gameFrame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#000}
 #gameLoader{position:absolute;inset:0;z-index:3;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;background:radial-gradient(ellipse at 50% 46%,#30210c 0,#130d05 34%,#050403 78%);color:#f5eedc;text-align:center}
@@ -144,7 +144,7 @@ button:disabled{opacity:.4;cursor:default}
 #loadingPercent{color:#b9a56a;font:11px ui-monospace,monospace;letter-spacing:.15em}
 @media(prefers-reduced-motion:reduce){#skullGlow,#skullGlow::before,#skullGlow::after,#skull{animation:none!important}}
 @media (max-height:430px){#desc{display:none}.top{padding:5px 14px}#info{padding:7px 14px;margin-bottom:5px}.hub{font-size:16px}}
-@media (pointer:coarse){.hints{display:none}#gameBack{top:50%;left:max(8px,env(safe-area-inset-left));transform:translateY(-50%);opacity:.52}}
+@media (pointer:coarse){.hints{display:none}#gameBack{top:max(8px,env(safe-area-inset-top));left:50%;width:32px;height:26px;font-size:16px;transform:translateX(-50%);opacity:.82}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
 #term div{white-space:pre}#term .wr{color:#e3b04b}
 .up small{opacity:.85;font-size:10px;line-height:1.5}
@@ -195,7 +195,7 @@ let bootSoundStarted=false;
 function startBootSound(){const boot=$('boot'),audio=$('bootAudio');if(bootSoundStarted||!boot||boot.classList.contains('hide')||!audio)return;bootSoundStarted=true;audio.volume=.7;const p=audio.play();if(p&&p.catch)p.catch(()=>{bootSoundStarted=false})}
 let tried=false;
 function lockLandscape(){if(tried||!matchMedia('(pointer:coarse)').matches)return;tried=true;try{const d=document.documentElement;if(d.requestFullscreen)d.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape')).catch(()=>{})}catch(e){}}
-function unlock(e){if(e&&e.isTrusted)startBootSound();aInit();if(e&&e.type!=='pointerdown')lockLandscape();if(!ac)return;if(ac.state!=='running')ac.resume().catch(()=>{})}
+function unlock(e){if(e&&e.isTrusted)startBootSound();aInit();if(!ac)return;if(ac.state!=='running')ac.resume().catch(()=>{})}
 ['pointerdown','pointerup','touchend','click','keydown'].forEach(ev=>addEventListener(ev,unlock,{passive:true}));
 /* o console é horizontal: em tela vertical (toque), o palco gira 90° sozinho, sem aviso */
 const mqP=matchMedia('(orientation:portrait)'),mqC=matchMedia('(pointer:coarse)');let rot=false;
@@ -238,13 +238,17 @@ function btn(){const g=cur(),b=$('play');let t='JOGAR',d=!g;
 function play(){const g=cur();if(!g||busy)return;if(hs===0){if(!inLib(g))addLib(g);return}
  if(hs===1&&inLib(g)){launchGame(g);return}sel();toast('Adicione o jogo à biblioteca para jogar.')}
 let gameLoadSequence=0,gameLoadTimer=0,gameProgressTimer=0,gameFallbackTimer=0;
-function launchGame(g){if(!g||!g.url)return;const seq=++gameLoadSequence,frame=$('gameFrame'),loader=$('gameLoader'),range=g.loadTime||{min:1700,max:3400},min=Math.max(400,+range.min||1700),max=Math.max(min,+range.max||3400),duration=Math.round(min+Math.random()*(max-min)),started=performance.now();let frameReady=false,delayReady=false;
+function launchGame(g){if(!g||!g.url)return;
+ // O jogo já possui layout touch próprio; não aplicar a rotação portrait
+ // do shell do console por cima do iframe.
+ document.documentElement.classList.remove('rot');
+ const seq=++gameLoadSequence,frame=$('gameFrame'),loader=$('gameLoader'),range=g.loadTime||{min:1700,max:3400},min=Math.max(400,+range.min||1700),max=Math.max(min,+range.max||3400),duration=Math.round(min+Math.random()*(max-min)),started=performance.now();let frameReady=false,delayReady=false;
  sel();frame.title=g.title;$('loadingTitle').textContent=g.title.toUpperCase();$('loadingMessage').textContent='Preparando o motor 3D…';$('loadingFill').style.width='0%';$('loadingPercent').textContent='0%';loader.classList.add('on');loader.setAttribute('aria-hidden','false');$('gameView').classList.add('on');$('gameView').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
  const finish=()=>{if(seq!==gameLoadSequence||!frameReady||!delayReady)return;clearTimeout(gameLoadTimer);clearInterval(gameProgressTimer);clearTimeout(gameFallbackTimer);$('loadingFill').style.width='100%';$('loadingPercent').textContent='100%';$('loadingMessage').textContent='Pista pronta';setTimeout(()=>{if(seq===gameLoadSequence){loader.classList.remove('on');loader.setAttribute('aria-hidden','true')}},180)};
  frame.onload=()=>{if(seq!==gameLoadSequence)return;frameReady=true;finish()};frame.src=g.url;
  gameProgressTimer=setInterval(()=>{if(seq!==gameLoadSequence)return;const p=Math.min(94,Math.floor((performance.now()-started)/duration*94));$('loadingFill').style.width=p+'%';$('loadingPercent').textContent=p+'%';$('loadingMessage').textContent=p<42?'Preparando o motor 3D…':p<78?'Carregando a pista…':'Finalizando a corrida…'},80);
  gameLoadTimer=setTimeout(()=>{delayReady=true;finish()},duration);gameFallbackTimer=setTimeout(()=>{if(seq!==gameLoadSequence||frameReady)return;frameReady=true;$('loadingMessage').textContent='Conexão lenta — abrindo o jogo…';finish()},15000)}
-function closeGame(){gameLoadSequence++;clearTimeout(gameLoadTimer);clearInterval(gameProgressTimer);clearTimeout(gameFallbackTimer);const frame=$('gameFrame');frame.onload=null;frame.src='about:blank';$('gameLoader').classList.remove('on');$('gameLoader').setAttribute('aria-hidden','true');$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);toast('De volta ao NJENGINE')}
+function closeGame(){gameLoadSequence++;document.documentElement.classList.remove('rot');clearTimeout(gameLoadTimer);clearInterval(gameProgressTimer);clearTimeout(gameFallbackTimer);const frame=$('gameFrame');frame.onload=null;frame.src='about:blank';$('gameLoader').classList.remove('on');$('gameLoader').setAttribute('aria-hidden','true');$('gameView').classList.remove('on');$('gameView').setAttribute('aria-hidden','true');document.body.style.overflow='';setHub(1);setRot();toast('De volta ao NJENGINE')}
 $('gameBack').onclick=closeGame;
 /* O envio salva o título na biblioteca local deste navegador; não depende de servidor externo. */
 function addLib(g){busy=true;btn();tick();
