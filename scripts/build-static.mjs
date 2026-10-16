@@ -1,4 +1,5 @@
 import { copyFile, mkdir, rm } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const root = process.cwd();
@@ -22,4 +23,7 @@ await mkdir(resolve(output, "sounds"), { recursive: true });
 for (const [source, destination] of files) {
   await copyFile(resolve(root, source), resolve(output, destination));
 }
-console.log(`Built the standalone NJENGINE page and PWA files in ${output}`);
+const gameRoot = resolve(root, "games/corrida-lunar");
+execFileSync("npm", ["ci", "--no-audit", "--no-fund"], { cwd: gameRoot, stdio: "inherit" });
+execFileSync("npm", ["run", "build"], { cwd: gameRoot, stdio: "inherit" });
+console.log(`Built NJENGINE and embedded Corrida Lunar in ${output}`);

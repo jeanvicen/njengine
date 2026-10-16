@@ -1,4 +1,4 @@
-const CACHE_NAME = "njengine-static-v6";
+const CACHE_NAME = "njengine-static-v7";
 const SHELL = [
   "/",
   "/index.html",
@@ -8,6 +8,7 @@ const SHELL = [
   "/__grok/icon-512.png",
   "/games/drifin-slot-cover.jpg",
   "/games/corrida-lunar-cover.jpg",
+  "/games/corrida-lunar/",
   "/sounds/njengine-boot.mp3",
 ];
 
@@ -31,11 +32,17 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put("/index.html", response.clone()));
+        .then(async (response) => {
+          if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, response.clone());
+          }
           return response;
         })
-        .catch(async () => (await caches.match("/index.html")) || (await caches.match("/"))),
+        .catch(async () => {
+          const cached = await caches.match(request);
+          return cached || (await caches.match("/index.html")) || (await caches.match("/"));
+        }),
     );
     return;
   }
